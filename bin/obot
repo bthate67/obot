@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+import os, sys ; sys.path.insert(0, "lib")
+
+from hdl import Client, cmd
+from nms import Names
+from obj import cfg
+from trm import exec
+from zzz import os, sys
+
+from obot.tbl import tbl
+
+__version__ = 1
+
+class Console(Client):
+
+    prompt = True
+
+    def handle(self, e):
+        super().handle(e)
+        e.wait()
+
+    def poll(self):
+        if Console.prompt:
+            return input("> ")
+
+    def raw(self, txt):
+        sys.stdout.write(txt)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+def ver(event):
+    event.reply("OBOT %s" % __version__)
+
+def main():
+    cfg.name = "obot"
+    cfg.version = __version__
+    cfg.wd = os.path.expanduser("~/.obot")
+    c = Console()
+    c.tbl(tbl)
+    c.boot()
+    c.add("ver", ver)
+    if cfg.txt:
+        c.prompt = False
+        e = c.event(cfg.otxt)
+        cmd(c, e)
+        e.wait()
+        return
+    if cfg.mods:
+        c.start()
+        c.init(cfg.mods)
+        c.wait()
+
+exec(main)
