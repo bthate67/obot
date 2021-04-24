@@ -44,6 +44,51 @@ start the bot with the irc module enabled::
 
 a shell is started as well so you can type commands on the bot's console.
 
+RSS
+===
+
+OBOT provides, with the use of feedparser, the possibility to serve rss
+feeds in your channel. Install python3-feedparser if you want to display 
+rss feeds in the channel::
+
+ $ sudo apt install python3-feedparser
+
+To add an url use the rss command with an url::
+
+ $ obot rss https://github.com/bthate/botlib/commits/master.atom
+ ok
+
+run the fnd (find) command to see what urls are registered::
+
+ $ obot fnd rss
+ 0 https://github.com/bthate/botlib/commits/master.atom
+
+the ftc (fetch) command can be used to poll the added feeds::
+
+ $ obot ftc
+ fetched 20
+
+UDP
+===
+
+OBOT has the possibility to serve as a UDP to IRC relay where you
+can send UDP packages to the bot and have txt displayed in the channel.
+
+to enable udp start the bot with the udp module enabled::
+
+ $ obot mods=irc,udp
+
+output to the IRC channel is done with the use python3 code to send a UDP
+packet to OBOT, it's unencrypted txt send to the bot and displayed in the
+joined channels:
+
+ import socket
+
+ def toudp(host=localhost, port=5500, txt=""):
+     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+     sock.sendto(bytes(txt.strip(), "utf-8"), host, port)
+
+
 COMMANDS
 ========
 
@@ -70,7 +115,7 @@ now you can type the "hlo" command, showing hello <user>::
 24/7
 ====
 
-to run BOTLIB 24/7 you need to enable the bots service under systemd:
+to run OBOT 24/7 you need to enable the bots service under systemd:
 
 edit /etc/systemd/system/bot.service and add the following txt::
 

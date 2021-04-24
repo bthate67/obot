@@ -20,17 +20,17 @@ def read():
     return open("README.rst", "r").read()
 
 setup(
-    name='botlib',
-    version='118',
+    name='obot',
+    version='100',
     description="python3 bot library",
     author='Bart Thate',
     author_email='bthate67@gmail.com', 
     url='https://github.com/bthate67/botlib',
     long_description=read(),
     license='Public Domain',
-    package_dir={'': 'lib'},
-    py_modules=mods("lib"),
-    scripts=["bin/bot", "bin/botc", "bin/bots"],
+    package=["obot"],
+    namespace_packages=["obot"],
+    scripts=["bin/obot", "bin/obotd", "bin/obotctl"],
     classifiers=['Development Status :: 4 - Beta',
                  'License :: Public Domain',
                  'Operating System :: Unix',

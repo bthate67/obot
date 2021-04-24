@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+from bus import Bus
+from evt import Command
+from hdl import Client, cmd
+from nms import Names
+from obj import cfg
+from trc import exception
+from trm import exec
+from zzz import os, sys
+
+from obot.irc import Cfg
+from obot.tbl import tbl
+
+__version__ = 38
+
+Cfg.channel = "#obot"
+Cfg.nick = "obot"
+
+def ver(event):
+    event.reply("OBOTD %s" % __version__)
+
+def main():
+    if "INVOCATION_ID" not in os.environ:
+        print("run this program under systemd.")
+        return
+    Names.tbl(tbl)
+    cfg.name = "obotd"
+    c = Client()
+    c.boot("/var/lib/obotd/")
+    c.add("ver", ver)
+    cfg.mods = "irc,rss,udp"
+    if cfg.txt:
+        Console.prompt = False
+        e = c.event(cfg.otxt)
+        cmd(c, e)
+        e.wait()
+        return
+    c.start()
+    c.init(cfg.mods)
+    c.wait()
+
+exec(main)

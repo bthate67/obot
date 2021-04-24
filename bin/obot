@@ -11,7 +11,7 @@ from zzz import os, sys
 
 from obot.tbl import table
 
-__version__ = 1
+__version__ = 100
 
 class Console(Client):
 
