@@ -9,13 +9,6 @@ def mods(name):
            res.append(p[:-3])
     return res
 
-def pmods(name):
-    res = []
-    for p in os.listdir(name):
-        if p.endswith(".py"):
-           res.append("%sp[:-3])
-    return res
-    
 def read():
     return open("README.rst", "r").read()
 
@@ -28,8 +21,7 @@ setup(
     url='https://github.com/bthate67/botlib',
     long_description=read(),
     license='Public Domain',
-    package=["obot"],
-    namespace_packages=["obot"],
+    packages=["obot"],
     scripts=["bin/obot", "bin/obotd", "bin/obotctl"],
     classifiers=['Development Status :: 4 - Beta',
                  'License :: Public Domain',

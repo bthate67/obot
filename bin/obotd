@@ -11,9 +11,9 @@ from trm import exec
 from zzz import os, sys
 
 from obot.irc import Cfg
-from obot.tbl import tbl
+from obot.tbl import table
 
-__version__ = 38
+__version__ = 100
 
 Cfg.channel = "#obot"
 Cfg.nick = "obot"
@@ -25,10 +25,11 @@ def main():
     if "INVOCATION_ID" not in os.environ:
         print("run this program under systemd.")
         return
-    Names.tbl(tbl)
+    Names.tbl(table)
     cfg.name = "obotd"
+    cfg.wd = "/var/lib/obotd"
     c = Client()
-    c.boot("/var/lib/obotd/")
+    c.boot()
     c.add("ver", ver)
     cfg.mods = "irc,rss,udp"
     if cfg.txt:

@@ -97,7 +97,7 @@ def main():
     if len(sys.argv) > 1:
         a = sys.argv[1]
     else:
-        a = "obot,olib,mod"
+        a = "obot,mod"
     tbl = walk(a)
     print("# This file is placed in the Public Domain.")
     print("")

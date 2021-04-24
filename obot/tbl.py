@@ -5,7 +5,6 @@ table = {
         "adm": "obot.adm",
         "irc": "obot.irc",
         "log": "obot.log",
-        "mbx": "obot.mbx",
         "rss": "obot.rss",
         "tbl": "obot.tbl",
         "tdo": "obot.tdo",
@@ -21,8 +20,8 @@ table = {
         "ftc": "obot.rss",
         "krn": "obot.adm",
         "log": "obot.log",
-        "mbx": "obot.mbx",
         "met": "obot.irc",
+        "mre": "obot.irc",
         "rem": "obot.rss",
         "rss": "obot.rss",
         "tdo": "obot.tdo",
@@ -34,8 +33,8 @@ table = {
             "bus.Bus"
         ],
         "cfg": [
-            "obot.rss.Cfg",
             "obot.irc.Cfg",
+            "obot.rss.Cfg",
             "obot.udp.Cfg"
         ],
         "client": [
@@ -46,9 +45,6 @@ table = {
         ],
         "default": [
             "obj.Default"
-        ],
-        "email": [
-            "obot.mbx.Email"
         ],
         "enouser": [
             "err.ENOUSER"

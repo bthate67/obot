@@ -8,7 +8,6 @@ from opt import Output
 from hdl import Handler, Client, cmd
 from obj import Cfg, Object, dorepr, fmt
 from thr import launch
-from usr import Users
 from utl import locked
 from zzz import os, queue, socket, textwrap
 from zzz import time, threading, _thread
@@ -492,3 +491,13 @@ def met(event):
     user.perms = ["USER"]
     user.save()
     event.reply("ok")
+
+def mre(event):
+    if event.channel not in Output.cache:
+        event.reply("no output in %s cache." % event.channel)
+        return
+    for txt in range(3):
+        txt = Output.cache[event.channel].pop(0)
+        if txt:
+            event.say(txt)
+    event.reply("(+%s more)" % Output.size(event.channel))
