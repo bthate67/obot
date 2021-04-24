@@ -14,12 +14,13 @@ def read():
 
 setup(
     name='obot',
-    version='100',
+    version='101',
     description="python3 bot library",
     author='Bart Thate',
     author_email='bthate67@gmail.com', 
     url='https://github.com/bthate67/botlib',
     long_description=read(),
+    install_requires=["olib"],
     license='Public Domain',
     packages=["obot"],
     scripts=["bin/obot", "bin/obotd", "bin/obotctl"],

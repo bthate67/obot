@@ -9,7 +9,7 @@ from zzz import os, sys
 
 from obot.tbl import table
 
-__version__ = 100
+__version__ = 101
 
 class Console(Client):
 
