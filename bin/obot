@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
 
-import os, sys ; sys.path.insert(0, "lib")
+import os, sys ; sys.path.insert(0, os.getcwd())
 
 from hdl import Client, cmd
 from nms import Names
@@ -9,7 +9,7 @@ from obj import cfg
 from trm import exec
 from zzz import os, sys
 
-from obot.tbl import tbl
+from obot.tbl import table
 
 __version__ = 1
 
@@ -34,11 +34,11 @@ def ver(event):
     event.reply("OBOT %s" % __version__)
 
 def main():
+    Names.tbl(table)
     cfg.name = "obot"
     cfg.version = __version__
     cfg.wd = os.path.expanduser("~/.obot")
     c = Console()
-    c.tbl(tbl)
     c.boot()
     c.add("ver", ver)
     if cfg.txt:

@@ -97,11 +97,11 @@ def main():
     if len(sys.argv) > 1:
         a = sys.argv[1]
     else:
-        a = "obot,mod"
+        a = "obot,olib,mod"
     tbl = walk(a)
     print("# This file is placed in the Public Domain.")
     print("")
-    print("tbl = %s" % tojson(tbl))
+    print("table = %s" % tojson(tbl))
 
 main()
 sys.stdout.flush()
