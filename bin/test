@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+import os, sys ; sys.path.insert(0, os.getcwd())
+
+import trc
+import url
+
+from hdl import Client
+from nms import Names
+from obj import cfg, opts
+from trm import exec
+from zzz import shutil, unittest
+
+from obot.tbl import table
+
+class Test(Client):
+
+    def raw(self, txt):
+        if opts("v"):
+            print(txt)
+
+class FlushTest(Test):
+
+    def raw(self, txt):
+        print(txt)
+        if opts("v"):
+            sys.stdout.write(txt)
+            sys.stdout.write("\n")
+
+def main():
+    if os.path.exists(".test"):
+        shutil.rmtree(".test")
+    Names.tbl(table)
+    url.debug = True
+    cfg.wd = ".test"
+    c = FlushTest()
+    c.boot()
+    c.start()
+    pat = "test_%s*" % "*"
+    suite = unittest.loader.TestLoader().discover("test", pattern=pat)
+    unittest.TextTestRunner(verbosity=3).run(suite)
+
+exec(main)
+for e in trc.exc:
+    print(e)
