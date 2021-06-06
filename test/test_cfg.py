@@ -2,20 +2,20 @@
 
 import unittest
 
-from edt import edit
-from obj import Cfg, cfg
-from prs import parseargs
+from dft import Default
+from obj import edit
+from prs import parse_txt
 
-cfg = Cfg()
+cfg = Default()
 
 class Test_Cfg(unittest.TestCase):
 
     def test_parse(self):
-        parseargs(cfg, "mods=irc")
+        parse_txt(cfg, "mods=irc")
         self.assertEqual(cfg.sets.mods, "irc")
 
     def test_parse2(self):
-        parseargs(cfg, "mods=irc,udp")
+        parse_txt(cfg, "mods=irc,udp")
         self.assertEqual(cfg.sets.mods, "irc,udp")
 
     def test_edit(self):

@@ -2,11 +2,22 @@
 
 from setuptools import setup, os
 
+def files(name):
+    res = []
+    for p in os.listdir(name):
+        if p.startswith("__"):
+            continue
+        if p.endswith(".py"):
+            res.append(os.path.join(name, p))
+    return res
+
 def mods(name):
     res = []
     for p in os.listdir(name):
+        if p.startswith("__"):
+            continue
         if p.endswith(".py"):
-           res.append(p[:-3])
+            res.append(p[:-3])
     return res
 
 def read():
@@ -15,14 +26,18 @@ def read():
 setup(
     name='obot',
     version='101',
-    description="python3 bot library",
+    description="24/7 channel daemon",
     author='Bart Thate',
     author_email='bthate67@gmail.com', 
-    url='https://github.com/bthate67/botlib',
+    url='https://github.com/bthate67/obot',
     long_description=read(),
-    install_requires=["olib"],
     license='Public Domain',
-    packages=["obot"],
+    package_dir={'': 'olib'},
+    py_modules=mods("olib"),
+    zip_safe=True,
+    include_package_data=True,
+    data_files=[('share/obot', ['files/obot.service']),
+                ('share/man/man1', ['files/obot.1.gz'])],
     scripts=["bin/obot", "bin/obotd", "bin/obotctl"],
     classifiers=['Development Status :: 4 - Beta',
                  'License :: Public Domain',

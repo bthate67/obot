@@ -1,19 +1,22 @@
 # This file is placed in the Public Domain.
 
-from bus import first
-from evt import Command
-from nms import Names
-from obj import cfg, opts
-from thr import launch
-from zzz import random, unittest
+import random
+import sys
+import unittest
 
-from test.prm import param
+from bus import first
+from clt import Client
+from evt import Command
+from thr import launch
+from krn import Kernel
+
+from prm import param
 
 class Test_Threaded(unittest.TestCase):
 
     def test_thrs(self):
         thrs = []
-        for x in range(cfg.index or 1):
+        for x in range(Kernel.cfg.index or 1):
             thr = launch(exec)
             thrs.append(thr)
         for thr in thrs:
@@ -33,16 +36,14 @@ def consume():
             events.remove(f)
         except ValueError:
             continue
-    for e in events:
-        print(e)
     return res
 
 def exec():
     c = first()
-    l = sorted(Names.modules)
+    l = list(Kernel.modules)
+    random.shuffle(l)
     for cmd in l:
         for ex in getattr(param, cmd, [""]):
             e = c.event(cmd + " " + ex)
-            print(e)
             c.put(e)
             events.append(e)

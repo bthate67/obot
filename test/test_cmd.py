@@ -1,16 +1,17 @@
 # This file is placed in the Public Domain.
 
-from bus import Bus
-from nms import Names
-from obj import cfg
-from zzz import unittest
+import random
+import unittest
 
-from test.prm import param
+from bot.bus import Bus, first
+from bot.krn import Kernel
+
+from prm import param
 
 class Test_Cmd(unittest.TestCase):
 
     def test_cmds(self):
-        for x in range(cfg.index or 1):
+        for x in range(Kernel.cfg.index or 1):
             exec()
         consume()
 
@@ -27,13 +28,12 @@ def consume():
             events.remove(f)
         except ValueError:
             continue
-    #for e in events:
-    #    print(e)
     return res
 
 def exec():
-    c = Bus.objs[0]
-    l = sorted(Names.modules)
+    c = first()
+    l = list(Kernel.modules)
+    random.shuffle(l)
     for cmd in l:
         for ex in getattr(param, cmd, [""]):
             e = c.event(cmd + " " + ex)

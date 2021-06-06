@@ -1,9 +1,10 @@
 # This file is placed in the Public Domain.
 
-from dbs import last
-from edt import merge
-from obj import O, Object, gettype, dorepr
-from zzz import os, unittest
+import os
+import unittest
+
+from dbs import find, last
+from obj import O, Object, gettype, merge
 
 class Test_Object(unittest.TestCase):
 
@@ -25,7 +26,7 @@ class Test_Object(unittest.TestCase):
 
     def test_json(self):
         o = Object()
-        self.assertTrue("<obj.Object" in dorepr(o))
+        self.assertTrue("<obj.Object" in o.__dorepr__())
 
     def test_intern4(self):
         o = Object()
@@ -122,8 +123,8 @@ class Test_Object(unittest.TestCase):
         oo.b = "1"
         oo.c = ["1"]
         oo.d = {"a": 1}
-        merge(o, oo)
-        self.assertEqual(o.c, ["1", "1"])
+        oo.merge(o)
+        self.assertEqual(o.c, ["1"])
 
     def test_nested(self):
         o = Object()

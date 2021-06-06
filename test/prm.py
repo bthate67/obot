@@ -14,9 +14,8 @@ param.fnd = ["cfg",
              "log",
              "todo",
              "rss",
-             "cfg server==localhost",
-             "rss rss==reddit rss",
-             "email From==pvp From Subject -t"]
+             "irc server==localhost",
+             "rss rss==reddit rss"]
 param.rss = ["https://www.reddit.com/r/python/.rss"]
 param.tdo = ["test4", ""]
 #param.mbx = ["~/Desktop/25-1-2013", ""]
