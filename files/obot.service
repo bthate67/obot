@@ -1,0 +1,14 @@
+[Unit]
+Description=OBOT - 24/7 channel service
+After=multi-user.target
+
+[Service]
+DynamicUser=True
+StateDirectory=obot
+LogsDirectory=obot
+CacheDirectory=obot
+ExecStart=/usr/local/bin/obot
+CapabilityBoundingSet=CAP_NET_RAW
+
+[Install]
+WantedBy=multi-user.target
