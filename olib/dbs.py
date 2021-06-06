@@ -1,17 +1,20 @@
 # This file is placed in the Public Domain.
 
-from obj import cfg, gettype, hook
-from nms import Names
-from tms import fntime
-from zzz import os, _thread
+import os
+import time
 
-dirlock = _thread.allocate_lock()
+from krn import Kernel
+from obj import cfg, gettype, search
+
+class ENOTYPE(Exception):
+
+    pass
 
 def all(otype, selector=None, index=None, timed=None):
     nr = -1
     if selector is None:
         selector = {}
-    otypes = Names.getnames(otype, [otype,])
+    otypes = Kernel.getnames(otype, [])
     for t in otypes:
         for fn in fns(t, timed):
             o = hook(fn)
@@ -25,7 +28,7 @@ def all(otype, selector=None, index=None, timed=None):
             yield fn, o
 
 def deleted(otype):
-    otypes = Names.getnames(otype, [otype,])
+    otypes = Kernel.getnames(otype, [])
     for t in otypes:
         for fn in fns(t):
             o = hook(fn)
@@ -49,10 +52,9 @@ def every(selector=None, index=None, timed=None):
                 continue
             yield fn, o
 
-def find(otype, selector=None, index=None, timed=None):
+def find(otypes, selector=None, index=None, timed=None):
     if selector is None:
         selector = {}
-    otypes = Names.getnames(otype, [otype,])
     got = False
     nr = -1
     for t in otypes:
@@ -97,11 +99,9 @@ def lastfn(otype):
         return (fnn, hook(fnn))
     return (None, None)
 
-#@locked(savelock)
 def fns(name, timed=None):
     if not name:
         return []
-    assert cfg.wd
     p = os.path.join(cfg.wd, "store", name) + os.sep
     res = []
     d = ""
@@ -120,22 +120,38 @@ def fns(name, timed=None):
                     res.append(p)
     return sorted(res, key=fntime)
 
+def fntime(daystr):
+    daystr = daystr.replace("_", ":")
+    datestr = " ".join(daystr.split(os.sep)[-2:])
+    if "." in datestr:
+        datestr, rest = datestr.rsplit(".", 1)
+    else:
+        rest = ""
+    t = time.mktime(time.strptime(datestr, "%Y-%m-%d %H:%M:%S"))
+    if rest:
+        t += float("." + rest)
+    else:
+        t = 0
+    return t
+
+def hook(hfn):
+    if hfn.count(os.sep) > 3:
+        oname = hfn.split(os.sep)[-4:]
+    else:
+        oname = hfn.split(os.sep)
+    cname = oname[0]
+    fn = os.sep.join(oname)
+    t = Kernel.getcls(cname)
+    if not t:
+        raise ENOTYPE(cname)
+    if fn:
+        o = t()
+        o.load(fn)
+        return o
+    raise ENOTYPE(cname)
+
 def listfiles(wd):
     path = os.path.join(wd, "store")
     if not os.path.exists(path):
         return []
     return sorted(os.listdir(path))
-
-def search(o, s):
-    ok = False
-    try:
-        ss = vars(s)
-    except TypeError:
-        ss = s
-    for k, v in ss.items():
-        vv = getattr(o, k, None)
-        if v not in str(vv):
-            ok = False
-            break
-        ok = True
-    return ok

@@ -1,33 +1,73 @@
 # This file is placed in the Public Domain.
 
-from dbs import find, last
-from edt import edit
-from err import ENOUSER
-from evt import Event
-from opt import Output
-from hdl import Handler, Client, cmd
-from obj import Cfg, Object, dorepr, fmt
-from thr import launch
-from utl import locked
-from zzz import os, queue, socket, textwrap
-from zzz import time, threading, _thread
+"irc bot"
 
-def init(hdl):
+import os
+import queue
+import socket
+import textwrap
+import time
+import threading
+import _thread
+
+from bus import Bus
+from dbs import find, last
+from dft import Default
+from evt import Event
+from hdl import end
+from clt import Client
+from opt import Output
+from thr import launch
+from krn import kcmd
+from obj import Object, edit, fmt
+
+def __dir__():
+    return ("ENOUSER", "Cfg", "DCC", "Event", "IRC", "User", "Users", "cfg", "dlt", "init", "locked", "met", "mre", "register")
+
+def init():
     i = IRC()
-    i.start()
+    i.initialize(kcmd)
+    launch(i.start)
     return i
+
+def register(k):
+    k.addcmd(cfg)
+    k.addcmd(dlt)
+    k.addcmd(met)
+    k.addcmd(mre)
+    k.addcls(Cfg)
+    k.addcls(User)
+
+def locked(l):
+    def lockeddec(func, *args, **kwargs):
+        def lockedfunc(*args, **kwargs):
+            l.acquire()
+            res = None
+            try:
+                res = func(*args, **kwargs)
+            finally:
+                l.release()
+            return res
+        lockedfunc.__wrapped__ = func
+        return lockedfunc
+    return lockeddec
 
 saylock = _thread.allocate_lock()
 
-class Cfg(Cfg):
+class ENOUSER(Exception):
+
+    pass
+
+class Cfg(Default):
 
     cc = "!"
     channel = "#obot"
     nick = "obot"
     port = 6667
     server = "localhost"
-    realname = "obot"
+    realname = "24/7 channel daemon"
     username = "obot"
+    users = False
 
     def __init__(self, val=None):
         super().__init__()
@@ -38,6 +78,7 @@ class Cfg(Cfg):
         self.server = Cfg.server
         self.realname = Cfg.realname
         self.username = Cfg.username
+        self.users = Cfg.users
         if val:
             self.update(val)
 
@@ -82,7 +123,8 @@ class IRC(Client, Output):
         self.threaded = False
         self.users = Users()
         self.zelf = ""
-        self.register("cmd", cmd)
+        self.register("cmd", kcmd)
+        self.register("end", end)
         self.register("ERROR", ERROR)
         self.register("LOG", LOG)
         self.register("NOTICE", NOTICE)
@@ -93,20 +135,19 @@ class IRC(Client, Output):
         for channel in self.channels:
             self.say(channel, txt)
 
+    @locked(saylock)
     def command(self, cmd, *args):
-        self.connected.wait()
         if not args:
             self.raw(cmd)
-            return
-        if len(args) == 1:
+        elif len(args) == 1:
             self.raw("%s %s" % (cmd.upper(), args[0]))
-            return
-        if len(args) == 2:
+        elif len(args) == 2:
             self.raw("%s %s :%s" % (cmd.upper(), args[0], " ".join(args[1:])))
-            return
-        if len(args) >= 3:
+        elif len(args) >= 3:
             self.raw("%s %s %s :%s" % (cmd.upper(), args[0], args[1], " ".join(args[2:])))
-            return
+        if (time.time() - self.state.last) < 4.0:
+            time.sleep(4.0)
+        self.state.last = time.time()
 
     def connect(self, server, port=6667):
         addr = socket.getaddrinfo(server, port, socket.AF_INET)[-1][-1]
@@ -129,7 +170,6 @@ class IRC(Client, Output):
             time.sleep(10.0 * self.state.nrconnect)
         self.logon(server, nick)
 
-    @locked(saylock)
     def dosay(self, channel, txt):
         wrapper = TextWrap()
         txt = str(txt).replace("\n", "")
@@ -137,9 +177,6 @@ class IRC(Client, Output):
             if not t:
                 continue
             self.command("PRIVMSG", channel, t)
-            if (time.time() - self.state.last) < 4.0:
-                time.sleep(4.0)
-            self.state.last = time.time()
 
     def event(self, txt):
         if not txt:
@@ -183,18 +220,18 @@ class IRC(Client, Output):
             time.sleep(60)
             self.state.pongcheck = True
             self.command("PING", self.cfg.server)
-            time.sleep(5.0)
+            time.sleep(10.0)
             if self.state.pongcheck:
                 self.keeprunning = False
                 try:
-                    self.reconnect()
+                    self.restart()
                 except ConnectionResetError:
                     continue
                 break
 
     def logon(self, server, nick):
         self.raw("NICK %s" % nick)
-        self.raw("USER %s %s %s :%s" % (self.cfg.username or "obt", server, server, self.cfg.realname or "write your own commands."))
+        self.raw("USER %s %s %s :%s" % (self.cfg.username or "botlib", server, server, self.cfg.realname or "24/7 channel daemon"))
 
     def parsing(self, txt):
         rawstr = str(txt)
@@ -202,7 +239,7 @@ class IRC(Client, Output):
         rawstr = rawstr.replace("\001", "")
         o = Event()
         o.rawstr = rawstr
-        o.orig = dorepr(self)
+        o.orig = self.__dorepr__()
         o.command = ""
         o.arguments = []
         arguments = rawstr.split()
@@ -270,10 +307,9 @@ class IRC(Client, Output):
         self.state.last = time.time()
         self.state.nrsend += 1
 
-    def reconnect(self):
+    def restart(self):
         self.stop()
         time.sleep(5.0)
-        self.stopped = False
         self.start()
 
     def say(self, channel, txt):
@@ -304,6 +340,7 @@ class IRC(Client, Output):
                        int(self.cfg.port))
         Client.start(self)
         Output.start(self)
+        Bus.add(self)
         if not self.keeprunning:
             launch(self.keep)
         self.wait()
@@ -316,7 +353,6 @@ class IRC(Client, Output):
             pass
         Output.stop(self)
         Client.stop(self)
-        Handler.start(self)
 
     def wait(self):
         self.joined.wait()
@@ -330,6 +366,7 @@ class DCC(Client):
         self.sock = None
         self.speed = "fast"
         self.stopped = False
+        self.initialize(kcmd)
 
     def raw(self, txt):
         self.sock.send(bytes("%s\n" % txt.rstrip(), self.encoding))
@@ -365,7 +402,7 @@ class DCC(Client):
         e.type = "cmd"
         e.channel = self.origin
         e.origin = self.origin or "root@dcc"
-        e.orig = dorepr(self)
+        e.orig = self.__dorepr__()
         e.txt = txt.rstrip()
         e.sock = self.sock
         return e
@@ -422,7 +459,6 @@ class Users(Object):
             user.save()
         return user
 
-
 def ERROR(hdl, obj):
     hdl.state.nrerror += 1
     hdl.state.error = obj.error
@@ -476,7 +512,7 @@ def dlt(event):
         event.reply("dlt <username>")
         return
     selector = {"user": event.args[0]}
-    for fn, o in find("obot.usr.User", selector):
+    for fn, o in find("user", selector):
         o._deleted = True
         o.save()
         event.reply("ok")
@@ -493,6 +529,9 @@ def met(event):
     event.reply("ok")
 
 def mre(event):
+    if event.channel is None:
+        event.reply("channel is not set.")
+        return
     if event.channel not in Output.cache:
         event.reply("no output in %s cache." % event.channel)
         return

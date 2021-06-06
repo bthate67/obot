@@ -1,46 +1,62 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
 
-import os, sys ; sys.path.insert(0, os.getcwd())
+__version__ = 103
 
-import trc
-import url
+import os, sys ; sys.path.insert(0, "olib")
 
-from hdl import Client
-from nms import Names
-from obj import cfg, opts
-from trm import exec
-from zzz import shutil, unittest
+from clt import Client
+from krn import Kernel
+from obj import cfg
 
-from obot.tbl import table
+import all
+
+import doctest
+import shutil
+import unittest
+
+all = "adm,cms,fnd,irc,log,rss,tdo,udp"
+flags = doctest.REPORT_NDIFF|doctest.FAIL_FAST|doctest.ELLIPSIS
 
 class Test(Client):
 
+    def __init__(self):
+        super().__init__()
+        self.initialize()
+
     def raw(self, txt):
-        if opts("v"):
+        if Kernel.opts("v"):
             print(txt)
 
-class FlushTest(Test):
+def docmd(hdl, o):
+    o.parse()
+    f = Kernel.getcmd(o.cmd)
+    if f:
+        f(o)
+        o.show()
+    o.ready()
 
-    def raw(self, txt):
-        print(txt)
-        if opts("v"):
-            sys.stdout.write(txt)
-            sys.stdout.write("\n")
+def exec(main):
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
 
 def main():
     if os.path.exists(".test"):
         shutil.rmtree(".test")
-    Names.tbl(table)
-    url.debug = True
+    cfg.debug = True
     cfg.wd = ".test"
-    c = FlushTest()
-    c.boot()
+    k = Kernel()
+    k.parse()
+    k.boot("test", __version__)
+    k.regs(all)
+    c = Test()
+    c.register("cmd", docmd)
     c.start()
     pat = "test_%s*" % "*"
     suite = unittest.loader.TestLoader().discover("test", pattern=pat)
     unittest.TextTestRunner(verbosity=3).run(suite)
+    doctest.testfile("../test/test1.txt", optionflags=flags, report=False, verbose=False)
 
 exec(main)
-for e in trc.exc:
-    print(e)

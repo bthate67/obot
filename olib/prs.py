@@ -1,9 +1,13 @@
 # This file is placed in the Public Domain.
 
-from err import ENOTXT
-from obj import Default, Object
-from tms import parse_time
-from zzz import time
+from dft import Default
+from obj import Object
+
+import datetime
+
+class ENOTXT(Exception):
+
+    pass
 
 class Token(Object):
 
@@ -24,9 +28,9 @@ class Getter(Object):
 
     def __init__(self, txt):
         super().__init__()
-        try:
-            pre, post = txt.split("==")
-        except ValueError:
+        if "==" in txt:
+            pre, post = txt.split("==", 1)
+        else:
             pre = post = ""
         if pre:
             self[pre] = post
@@ -35,9 +39,9 @@ class Setter(Object):
 
     def __init__(self, txt):
         super().__init__()
-        try:
+        if "=" in txt:
             pre, post = txt.split("=")
-        except ValueError:
+        else:
             pre = post = ""
         if pre:
             self[pre] = post
@@ -48,40 +52,67 @@ class Skip(Object):
         super().__init__()
         pre = ""
         if txt.endswith("-"):
-            try:
-                pre, _post = txt.split("=")
-            except ValueError:
-                try:
-                    pre, _post = txt.split("==")
-                except ValueError:
-                    pre = txt
+            if "=" in txt:
+                pre, _post = txt.split("=", 1)
+            elif "==" in txt:
+                pre, _post = txt.split("==", 1)
+            else:
+                pre = txt
         if pre:
             self[pre] = True
 
-class Timed(Object):
+class Url(Object):
 
     def __init__(self, txt):
         super().__init__()
-        v = 0
-        vv = 0
-        try:
-            pre, post = txt.split("-")
-            v = parse_time(pre)
-            vv = parse_time(post)
-        except ValueError:
-            pass
-        if not v or not vv:
-            try:
-                vv = parse_time(txt)
-            except ValueError:
-                vv = 0
-            v = 0
-        if v:
-            self["from"] = time.time() - v
-        if vv:
-            self["to"] = time.time() - vv
+        if txt.startswith("http"):
+            self["url"] = txt
 
-def parseargs(o, ptxt=None):
+def day():
+    return str(datetime.datetime.today()).split()[0]
+
+def elapsed(seconds, short=True):
+    txt = ""
+    nsec = float(seconds)
+    year = 365*24*60*60
+    week = 7*24*60*60
+    nday = 24*60*60
+    hour = 60*60
+    minute = 60
+    years = int(nsec/year)
+    nsec -= years*year
+    weeks = int(nsec/week)
+    nsec -= weeks*week
+    nrdays = int(nsec/nday)
+    nsec -= nrdays*nday
+    hours = int(nsec/hour)
+    nsec -= hours*hour
+    minutes = int(nsec/minute)
+    sec = nsec - minutes*minute
+    if years:
+        txt += "%sy" % years
+    if weeks:
+        nrdays += weeks * 7
+    if nrdays:
+        txt += "%sd" % nrdays
+    if years and short and txt:
+        return txt
+    if hours:
+        txt += "%sh" % hours
+    if nrdays and short and txt:
+        return txt
+    if minutes:
+        txt += "%sm" % minutes
+    if hours and short and txt:
+        return txt
+    if sec == 0:
+        txt += "0s"
+    else:
+        txt += "%ss" % int(sec)
+    txt = txt.strip()
+    return txt
+
+def parse_txt(o, ptxt=None):
     if ptxt is None:
         raise ENOTXT(o)
     o.txt = ptxt
@@ -94,14 +125,14 @@ def parseargs(o, ptxt=None):
     o.skip = Default()
     args = []
     for token in [Token(txt) for txt in ptxt.split()]:
+        u = Url(token.txt)
+        if u:
+            args.append(u.url)
+            continue
         s = Skip(token.txt)
         if s:
             o.skip.update(s)
             token.txt = token.txt[:-1]
-        t = Timed(token.txt)
-        if t:
-            o.timed.append(t)
-            continue
         g = Getter(token.txt)
         if g:
             o.gets.update(g)
@@ -135,3 +166,27 @@ def parseargs(o, ptxt=None):
     o.txt = " ".join(args)
     o.rest = " ".join(args[1:])
     return o
+
+def parse_ymd(daystr):
+    valstr = ""
+    val = 0
+    total = 0
+    for c in daystr:
+        if c in "1234567890":
+            vv = int(valstr)
+        else:
+            vv = 0
+        if c == "y":
+            val = vv * 3600*24*365
+        if c == "w":
+            val = vv * 3600*24*7
+        elif c == "d":
+            val = vv * 3600*24
+        elif c == "h":
+            val = vv * 3600
+        elif c == "m":
+            val = vv * 60
+        else:
+            valstr += c
+        total += val
+    return total

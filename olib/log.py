@@ -1,6 +1,15 @@
 # This file is in the Public Domain.
 
+"logging"
+
 from obj import Object
+
+def __dir__():
+    return ("Log", "log", "register")
+
+def register(k):
+    k.addcmd(log)
+    k.addcls(Log)
 
 class Log(Object):
 

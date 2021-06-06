@@ -1,13 +1,14 @@
 # This file is placed in the Public Domain.
 
-from err import ENOTIMPLEMENTED
-from obj import Object, ObjectList
+import queue
+
+from lst import List
+from obj import Object
 from thr import launch
-from zzz import queue, time
 
 class Output(Object):
 
-    cache = ObjectList()
+    cache = List()
 
     def __init__(self):
         super().__init__()
@@ -20,7 +21,7 @@ class Output(Object):
         Output.cache[channel].extend(txtlist)
 
     def dosay(self, channel, txt):
-        raise ENOTIMPLEMENTED("dosay")
+        pass
 
     def oput(self, channel, txt):
         self.oqueue.put_nowait((channel, txt))
@@ -28,7 +29,7 @@ class Output(Object):
     def output(self):
         while not self.stopped:
             (channel, txt) = self.oqueue.get()
-            if self.stopped:
+            if self.stopped or channel is None:
                 break
             self.dosay(channel, txt)
 

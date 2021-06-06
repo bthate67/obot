@@ -1,58 +1,111 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
 
-import os, sys
+__version__ = 45
 
-sys.path.insert(0, os.getcwd())
+import atexit
+import importlib
+import os
+import sys
+import termios
+
 sys.path.insert(0, "olib")
 
-from hdl import Client, cmd
-from nms import Names
+from bus import first
+from clt import Client
+from krn import Kernel, kcmd
 from obj import cfg
-from trm import exec
-from zzz import os, sys
 
-from obot.tbl import table
+import all
 
-__version__ = 101
+all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
+name = "obot"
+resume = {}
 
-class Console(Client):
+def termsetup(fd):
+    return termios.tcgetattr(fd)
 
-    prompt = True
+def termreset():
+    if "old" in resume:
+        try:
+            termios.tcsetattr(resume["fd"], termios.TCSADRAIN, resume["old"])
+        except termios.error:
+            pass
+
+def termsave():
+    try:
+        resume["fd"] = sys.stdin.fileno()
+        resume["old"] = termsetup(sys.stdin.fileno())
+        atexit.register(termreset)
+    except termios.error:
+        pass
+
+class CLI(Client):
+
+    def raw(self, txt):
+        print(txt)
+
+    def start(self):
+        super().start()
+        self.initialize(kcmd)
+
+class Console(CLI):
 
     def handle(self, e):
         super().handle(e)
         e.wait()
 
     def poll(self):
-        if Console.prompt:
-            return input("> ")
+        return input("> ")
 
-    def raw(self, txt):
-        sys.stdout.write(txt)
-        sys.stdout.write("\n")
-        sys.stdout.flush()
-
-def ver(event):
-    event.reply("OBOT %s" % __version__)
+def scan(path, base=None):
+    if not os.path.exists(path):
+        return
+    if base is None:
+        base = os.path.dirname(path).split(os.sep)[-1]
+    for p in os.listdir(path):
+        mn = p.split(os.sep)[-1][:-3]
+        try:
+            mod = importlib.import_module(mn, base)
+        except ImportError:
+            continue
+        Kernel.addmod(mod)
+        if "register" in dir(mod):
+            mod.register(Kernel)
 
 def main():
-    Names.tbl(table)
-    cfg.name = "obot"
-    cfg.version = __version__
-    cfg.wd = os.path.expanduser("~/.obot")
-    c = Console()
-    c.boot()
-    c.add("ver", ver)
-    if cfg.txt:
-        c.prompt = False
-        e = c.event(cfg.otxt)
-        cmd(c, e)
+    cfg.wd = os.path.expanduser("~/.%s" % name)
+    k = Kernel()
+    k.parse()
+    k.boot(name, __version__)
+    scan("omod")
+    if k.cfg.txt:
+        k.regs(all)
+        c = CLI()
+        c.initialize()
+        e = c.event(k.cfg.otxt)
+        kcmd(c, e)
         e.wait()
         return
-    if cfg.mods:
+    c = Client()
+    if k.opts("c"):
+        c = Console()
+        k.cfg.mods += ",cms"
+    k.regs(k.cfg.mods)
+    k.init(k.cfg.mods)
+    if k.opts("cd"):
         c.start()
-        c.init(cfg.mods)
         c.wait()
+
+def exec(main):
+    termsave()
+    try:
+        main()
+    except PermissionError as ex:
+        print(str(ex))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        termreset()
 
 exec(main)

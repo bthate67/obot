@@ -1,6 +1,8 @@
 # This file is placed in the Public Domain.
 
-from obj import Object, dorepr
+"object handler"
+
+from obj import Object
 
 class Bus(Object):
 
@@ -23,7 +25,7 @@ class Bus(Object):
     @staticmethod
     def byorig(orig):
         for o in Bus.objs:
-            if dorepr(o) == orig:
+            if o.__dorepr__() == orig:
                 return o
 
     @staticmethod
@@ -46,9 +48,13 @@ class Bus(Object):
     @staticmethod
     def say(orig, channel, txt):
         for o in Bus.objs:
-            if dorepr(o) == orig:
+            if o.__dorepr__() == orig:
                 o.say(channel, txt)
 
-def first():
+def first(otype=None):
     if Bus.objs:
-        return Bus.objs[0]
+        if not otype:
+            return Bus.objs[0]
+        for o in Bus.objs:
+            if otype in str(type(o)):
+                return o
