@@ -1,26 +1,89 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
 
-__version__ = 45
+__version__ = 101
 
-import atexit
-import importlib
-import os
-import sys
-import termios
+import os, sys ; sys.path.insert(0, "olib")
 
-sys.path.insert(0, "olib")
-
-from bus import first
 from clt import Client
-from krn import Kernel, kcmd
-from obj import cfg
+from krn import Kernel, kcmd, root
+from obj import cdir, cfg
 
 import all
+import atexit
+import os
+import pwd
+import shutil
+import sys
+import termios
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
 name = "obot"
 resume = {}
+
+def cprint(txt):
+    print(txt)
+    sys.stdout.flush()
+
+class CLI(Client):
+
+    def __init__(self):
+        super().__init__()
+        self.initialize(kcmd)
+
+    def raw(self, txt):
+        cprint(txt)
+
+class Console(CLI):
+
+    def handle(self, e):
+        super().handle(e)
+        e.wait()
+
+    def poll(self):
+        return input("> ")
+
+def daemon():
+    pid = os.fork()
+    if pid != 0:
+        termreset()
+        os._exit(0)
+    os.setsid()
+    os.umask(0)
+    si = open("/dev/null", 'r')
+    so = open("/dev/null", 'a+')
+    se = open("/dev/null", 'a+')
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+
+def privileges(name):
+    if os.getuid() != 0:
+        return
+    try:
+        pwn = pwd.getpwnam(name)
+    except KeyError:
+        return
+    os.setgroups([])
+    os.setgid(pwn.pw_gid)
+    os.setuid(pwn.pw_uid)
+    old_umask = os.umask(0o22)
+    return True
+
+def scan(path, base=None):
+    if not os.path.exists(path):
+        return
+    if base is None:
+        base = os.path.dirname(path).split(os.sep)[-1]
+    for p in os.listdir(path):
+        mn = p.split(os.sep)[-1][:-3]
+        try:
+            mod = importlib.import_module(mn, base)
+        except ImportError:
+            continue
+        Kernel.addmod(mod)
+        if "register" in dir(mod):
+            mod.register(Kernel)
 
 def termsetup(fd):
     return termios.tcgetattr(fd)
@@ -40,69 +103,26 @@ def termsave():
     except termios.error:
         pass
 
-class CLI(Client):
-
-    def raw(self, txt):
-        print(txt)
-
-    def start(self):
-        super().start()
-        self.initialize(kcmd)
-
-class Console(CLI):
-
-    def handle(self, e):
-        super().handle(e)
-        e.wait()
-
-    def poll(self):
-        return input("> ")
-
-def scan(path, base=None):
-    if not os.path.exists(path):
-        return
-    if base is None:
-        base = os.path.dirname(path).split(os.sep)[-1]
-    for p in os.listdir(path):
-        mn = p.split(os.sep)[-1][:-3]
-        try:
-            mod = importlib.import_module(mn, base)
-        except ImportError:
-            continue
-        Kernel.addmod(mod)
-        if "register" in dir(mod):
-            mod.register(Kernel)
-
 def main():
-    cfg.wd = os.path.expanduser("~/.%s" % name)
+    cfg.wd = ".%s" % name
     k = Kernel()
     k.parse()
     k.boot(name, __version__)
-    scan("omod")
-    if k.cfg.txt:
-        k.regs(all)
-        c = CLI()
-        c.initialize()
-        e = c.event(k.cfg.otxt)
-        kcmd(c, e)
-        e.wait()
-        return
-    c = Client()
-    if k.opts("c"):
+    k.regs(all)
+    if k.opts("d"):
+        daemon()
+    else:
         c = Console()
-        k.cfg.mods += ",cms"
-    k.regs(k.cfg.mods)
-    k.init(k.cfg.mods)
-    if k.opts("cd"):
         c.start()
-        c.wait()
+    k.init(all)
+    k.wait()
 
-def exec(main):
+def exec(func):
     termsave()
     try:
-        main()
+        func()
     except PermissionError as ex:
-        print(str(ex))
+        cprint(str(ex))
     except KeyboardInterrupt:
         pass
     finally:
