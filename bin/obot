@@ -104,7 +104,7 @@ def termsave():
         pass
 
 def main():
-    cfg.wd = ".%s" % name
+    cfg.wd = os.path.expanduser("~/.%s" % name)
     k = Kernel()
     k.parse()
     k.boot(name, __version__)
