@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+__version__ = 101
+
+import os, sys ; sys.path.insert(0, "olib")
+
+from clt import Client
+from krn import Kernel, kcmd, root
+from obj import cdir, cfg
+from trc import get_exception
+
+import all
+import atexit
+import os
+import pwd
+import shutil
+import sys
+import termios
+
+all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
+name = "obot"
+resume = {}
+
+def cprint(txt):
+    print(txt)
+    sys.stdout.flush()
+
+def scan(path, base=None):
+    if not os.path.exists(path):
+        return
+    if base is None:
+        base = os.path.dirname(path).split(os.sep)[-1]
+    for p in os.listdir(path):
+        mn = p.split(os.sep)[-1][:-3]
+        try:
+            mod = importlib.import_module(mn, base)
+        except ImportError:
+            continue
+        Kernel.addmod(mod)
+        if "register" in dir(mod):
+            mod.register(Kernel)
+
+def main():
+    cfg.wd = "/var/lib/%s/" % name
+    k = Kernel()
+    k.parse()
+    k.boot(name, __version__)
+    k.regs(all)
+    c = Client()
+    c.initialize()
+    c.start()
+    k.init(all)
+    k.wait()
+
+def exec(func):
+    try:
+        func()
+    except PermissionError as ex:
+        cprint(str(ex))
+    except KeyboardInterrupt:
+        pass
+    except Exception as ex:
+        cprint(get_exception())
+
+exec(main)

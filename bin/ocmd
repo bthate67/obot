@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+__version__ = 101
+
+import atexit
+import importlib
+import os
+import sys
+import termios
+
+sys.path.insert(0, "olib")
+
+from bus import first
+from clt import Client
+from krn import Kernel, kcmd
+from obj import cfg
+
+import all
+
+all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
+name = "ocmd"
+
+class CLI(Client):
+
+    def raw(self, txt):
+        print(txt)
+
+    def start(self):
+        super().start()
+        self.initialize(kcmd)
+
+def scan(path, base=None):
+    if not os.path.exists(path):
+        return
+    if base is None:
+        base = os.path.dirname(path).split(os.sep)[-1]
+    for p in os.listdir(path):
+        mn = p.split(os.sep)[-1][:-3]
+        try:
+            mod = importlib.import_module(mn, base)
+        except ImportError:
+            continue
+        Kernel.addmod(mod)
+        if "register" in dir(mod):
+            mod.register(Kernel)
+
+def main():
+    cfg.wd = "/var/lib/obot/"
+    k = Kernel()
+    k.parse()
+    k.boot(name, __version__)
+    scan("omod")
+    k.regs(all)
+    c = CLI()
+    c.initialize()
+    e = c.event(k.cfg.otxt)
+    kcmd(c, e)
+    e.wait()
+
+def exec(main):
+    try:
+        main()
+    except PermissionError as ex:
+        print(str(ex))
+    except KeyboardInterrupt:
+        pass
+
+exec(main)
