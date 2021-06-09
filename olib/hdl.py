@@ -7,6 +7,7 @@ from bus import Bus
 from evt import Event
 from obj import Object
 from thr import launch
+from trc import get_exception
 
 class ENOMORE(Exception):
 
@@ -34,11 +35,15 @@ class Handler(Object):
     def handler(self):
         while not self.stopped:
             e = self.queue.get()
+            if not e:
+                break
             try:
                 self.callbacks(e)
-            except ENOMORE:
-                e.ready()
-                break
+            except Exception as ex:
+                e = Event()
+                e.type = "error"
+                e.trc = get_exception()
+                self.error(e)
 
     def initialize(self, hdl=None):
         self.register("end", end)
@@ -49,6 +54,10 @@ class Handler(Object):
 
     def register(self, name, callback):
         self.cbs[name] = callback
+
+    def restart(self):
+        self.stop()
+        self.start()        
 
     def start(self):
         self.stopped = False

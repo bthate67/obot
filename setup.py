@@ -38,7 +38,7 @@ setup(
     include_package_data=True,
     data_files=[('share/obot', ['files/obot.service']),
                 ('share/man/man1', ['files/obot.1.gz'])],
-    scripts=["bin/obot", "bin/ocmd", "bin/octl"],
+    scripts=["bin/obot", "bin/obotd", "bin/ocmd", "bin/octl"],
     classifiers=['Development Status :: 4 - Beta',
                  'License :: Public Domain',
                  'Operating System :: Unix',

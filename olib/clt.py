@@ -35,12 +35,10 @@ class Client(Handler):
 
     def input(self):
         while not self.stopped:
-            try:
-                e = self.once()
-                self.handle(e)
-            except (ConnectionResetError, ENOMORE):
-                e.ready()
+            e = self.once()
+            if not e:
                 break
+            self.handle(e)
 
     def once(self):
         txt = self.poll()
@@ -51,6 +49,10 @@ class Client(Handler):
 
     def raw(self, txt):
         pass
+
+    def restart(self):
+        self.stop()
+        self.start()
 
     def say(self, channel, txt):
         self.raw(txt)

@@ -1,5 +1,6 @@
 # This file is placed in the Public Domain.
 
+import os
 import sys
 import traceback
 
@@ -13,8 +14,7 @@ def get_exception(txt="", sep=" "):
         else:
             plugfile = elem[0].split(os.sep)
         mod = []
-        print(plugfile)
-        for element in plugfile[:-2:-1]:
+        for element in plugfile[:-3:-1]:
             mod.append(element)
         ownname = ".".join(mod[::-1])
         result.append("%s:%s" % (ownname, elem[1]))

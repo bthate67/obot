@@ -8,18 +8,20 @@ import os, sys ; sys.path.insert(0, "olib")
 from clt import Client
 from krn import Kernel, kcmd, root
 from obj import cdir, cfg
+from trm import termreset, termsave
 
 import all
 import atexit
+import importlib
 import os
 import pwd
+import readline
 import shutil
 import sys
 import termios
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
 name = "obot"
-resume = {}
 
 def cprint(txt):
     print(txt)
@@ -31,13 +33,17 @@ class CLI(Client):
         super().__init__()
         self.initialize(kcmd)
 
+    def error(self, e):
+        cprint(e.trc)
+
     def raw(self, txt):
         cprint(txt)
 
 class Console(CLI):
 
     def handle(self, e):
-        super().handle(e)
+        self.put(e)
+        #super().handle(e)
         e.wait()
 
     def poll(self):
@@ -74,34 +80,18 @@ def scan(path, base=None):
     if not os.path.exists(path):
         return
     if base is None:
-        base = os.path.dirname(path).split(os.sep)[-1]
+        base = os.path.abspath(path).split(os.sep)[-1]
+    sys.path.insert(0, base)
     for p in os.listdir(path):
         mn = p.split(os.sep)[-1][:-3]
         try:
-            mod = importlib.import_module(mn, base)
-        except ImportError:
+            mod = importlib.import_module(mn)
+        except ModuleNotFoundError:
             continue
         Kernel.addmod(mod)
         if "register" in dir(mod):
             mod.register(Kernel)
 
-def termsetup(fd):
-    return termios.tcgetattr(fd)
-
-def termreset():
-    if "old" in resume:
-        try:
-            termios.tcsetattr(resume["fd"], termios.TCSADRAIN, resume["old"])
-        except termios.error:
-            pass
-
-def termsave():
-    try:
-        resume["fd"] = sys.stdin.fileno()
-        resume["old"] = termsetup(sys.stdin.fileno())
-        atexit.register(termreset)
-    except termios.error:
-        pass
 
 def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
@@ -109,12 +99,13 @@ def main():
     k.parse()
     k.boot(name, __version__)
     k.regs(all)
+    scan("omod")
     if k.opts("d"):
         daemon()
     else:
         c = Console()
         c.start()
-    k.init(all)
+    k.init(k.cfg.mods)
     k.wait()
 
 def exec(func):
