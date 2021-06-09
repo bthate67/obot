@@ -45,6 +45,10 @@ class Console(CLI):
     def poll(self):
         return input("> ")
 
+    def start(self):
+        self.register("cmd", kcmd)
+        super().start()
+
 def daemon():
     pid = os.fork()
     if pid != 0:

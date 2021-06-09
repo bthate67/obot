@@ -40,6 +40,7 @@ class Event(Object):
     def show(self):
         if self.exc:
             self.say(self.exc)
+            return
         bot = self.bot()
         if bot.speed == "slow" and len(self.result) > 3:
             Output.append(self.channel, self.result)

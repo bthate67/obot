@@ -42,10 +42,10 @@ class Handler(Object):
             except Exception as ex:
                 e = Event()
                 e.type = "error"
-                e.trc = get_exception()
+                e.exc = get_exception()
                 self.error(e)
 
-    def initialize(self, hdl=None):
+    def initialize(self):
         Bus.add(self)
 
     def put(self, e):

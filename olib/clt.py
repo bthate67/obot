@@ -58,6 +58,7 @@ class Client(Handler):
             return
         self.stopped = False
         self.running = True
+        self.initialize()
         super().start()
         launch(self.input)
 
