@@ -5,12 +5,6 @@ __version__ = 101
 
 import os, sys ; sys.path.insert(0, "olib")
 
-from clt import Client
-from evt import Command
-from krn import Kernel, kcmd, root
-from obj import cdir, cfg
-from trm import termreset, termsave
-
 import all
 import atexit
 import importlib
@@ -20,6 +14,13 @@ import readline
 import shutil
 import sys
 import termios
+
+from clt import Client
+from evt import Command
+from krn import Kernel, kcmd, root
+from obj import cdir, cfg
+from trm import termreset, termsave
+from utl import daemon, exec, scan
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
 name = "obot"
@@ -49,49 +50,6 @@ class Console(CLI):
         self.register("cmd", kcmd)
         super().start()
 
-def daemon():
-    pid = os.fork()
-    if pid != 0:
-        termreset()
-        os._exit(0)
-    os.setsid()
-    os.umask(0)
-    si = open("/dev/null", 'r')
-    so = open("/dev/null", 'a+')
-    se = open("/dev/null", 'a+')
-    os.dup2(si.fileno(), sys.stdin.fileno())
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    os.dup2(se.fileno(), sys.stderr.fileno())
-
-def privileges(name):
-    if os.getuid() != 0:
-        return
-    try:
-        pwn = pwd.getpwnam(name)
-    except KeyError:
-        return
-    os.setgroups([])
-    os.setgid(pwn.pw_gid)
-    os.setuid(pwn.pw_uid)
-    old_umask = os.umask(0o22)
-    return True
-
-def scan(path, base=None):
-    if not os.path.exists(path):
-        return
-    if base is None:
-        base = os.path.abspath(path).split(os.sep)[-1]
-    sys.path.insert(0, base)
-    for p in os.listdir(path):
-        mn = p.split(os.sep)[-1][:-3]
-        try:
-            mod = importlib.import_module(mn)
-        except ModuleNotFoundError:
-            continue
-        Kernel.addmod(mod)
-        if "register" in dir(mod):
-            mod.register(Kernel)
-
 def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
     k = Kernel()
@@ -113,16 +71,5 @@ def main():
         c.start()
     k.init(k.cfg.mods)
     k.wait()
-
-def exec(func):
-    termsave()
-    try:
-        func()
-    except PermissionError as ex:
-        cprint(str(ex))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        termreset()
 
 exec(main)
