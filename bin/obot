@@ -6,6 +6,7 @@ __version__ = 101
 import os, sys ; sys.path.insert(0, "olib")
 
 from clt import Client
+from evt import Command
 from krn import Kernel, kcmd, root
 from obj import cdir, cfg
 from trm import termreset, termsave
@@ -29,10 +30,6 @@ def cprint(txt):
 
 class CLI(Client):
 
-    def __init__(self):
-        super().__init__()
-        self.initialize(kcmd)
-
     def error(self, e):
         cprint(e.trc)
 
@@ -43,7 +40,6 @@ class Console(CLI):
 
     def handle(self, e):
         self.put(e)
-        #super().handle(e)
         e.wait()
 
     def poll(self):
@@ -92,7 +88,6 @@ def scan(path, base=None):
         if "register" in dir(mod):
             mod.register(Kernel)
 
-
 def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
     k = Kernel()
@@ -100,6 +95,13 @@ def main():
     k.boot(name, __version__)
     k.regs(all)
     scan("omod")
+    if k.cfg.txt:
+        c = CLI()
+        c.start()
+        e = Command()
+        e.orig = c.__dorepr__()
+        e.txt = k.cfg.otxt
+        return kcmd(c, e)
     if k.opts("d"):
         daemon()
     else:

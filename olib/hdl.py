@@ -46,7 +46,6 @@ class Handler(Object):
                 self.error(e)
 
     def initialize(self, hdl=None):
-        self.register("end", end)
         Bus.add(self)
 
     def put(self, e):
@@ -60,6 +59,7 @@ class Handler(Object):
         self.start()        
 
     def start(self):
+        self.initialize()
         self.stopped = False
         launch(self.handler)
         return self

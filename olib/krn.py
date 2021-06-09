@@ -8,7 +8,9 @@ import pwd
 import sys
 import time
 
+from clt import Client
 from dft import Default
+from evt import Command
 from obj import Object, cdir, cfg, spl
 from prs import parse_txt
 from thr import launch
@@ -85,6 +87,15 @@ class Kernel(Object):
         privileges()
 
     @staticmethod
+    def cmd(txt):
+        c = Client()
+        c.start()
+        e = Command()
+        e.orig = c.__dorepr__()
+        e.txt = txt
+        kcmd(c, e)
+
+    @staticmethod
     def getcls(name):
         if "." in name:
             mn, clsn = name.rsplit(".", 1)
@@ -146,6 +157,7 @@ class Kernel(Object):
     def wait():
         while 1:
             time.sleep(5.0)
+
 
 def kcmd(hdl, obj):
     obj.parse()

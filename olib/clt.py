@@ -29,10 +29,6 @@ class Client(Handler):
     def handle(self, e):
         super().put(e)
 
-    def initialize(self, hdl=None):
-        super().initialize(hdl)
-        self.register("cmd", hdl or docmd)
-
     def input(self):
         while not self.stopped:
             e = self.once()
