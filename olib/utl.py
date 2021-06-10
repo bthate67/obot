@@ -1,5 +1,6 @@
 # This file is placed in the Public Domain.
 
+import builtins
 import importlib
 import os
 import pwd
@@ -7,6 +8,14 @@ import sys
 
 import krn
 import trm
+
+def builtin(o):
+    b = dir(builtins)
+    for nm in dir(o):
+        if nm not in b:
+            v = getattr(o, nm, None)
+            if v:
+                setattr(builtins, nm, v)
 
 def cprint(txt):
     print(txt)
@@ -26,7 +35,7 @@ def daemon():
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
-def exec(func):
+def wrap(func):
     trm.termsave()
     try:
         func()

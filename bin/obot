@@ -15,19 +15,8 @@ import shutil
 import sys
 import termios
 
-from clt import Client
-from evt import Command
-from krn import Kernel, kcmd, root
-from obj import cdir, cfg
-from trm import termreset, termsave
-from utl import daemon, exec, scan
-
 all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
 name = "obot"
-
-def cprint(txt):
-    print(txt)
-    sys.stdout.flush()
 
 class CLI(Client):
 
@@ -72,4 +61,4 @@ def main():
     k.init(k.cfg.mods)
     k.wait()
 
-exec(main)
+wrap(main)

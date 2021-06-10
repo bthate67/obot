@@ -1,6 +1,7 @@
 "all modules"
 
 from krn import Kernel
+from utl import builtin
 
 import bus
 import cfg
@@ -25,6 +26,7 @@ import log
 import rss
 import tdo
 import udp
+import utl
 import ver
 
 Kernel.addmod(adm)
@@ -49,4 +51,32 @@ Kernel.addmod(obj)
 Kernel.addmod(opt)
 Kernel.addmod(prs)
 Kernel.addmod(thr)
+Kernel.addmod(udp)
+Kernel.addmod(utl)
 Kernel.addmod(ver)
+
+builtin(bus)
+builtin(cfg)
+builtin(clk)
+builtin(clt)
+builtin(cmd)
+builtin(cms)
+builtin(dbs)
+builtin(dft)
+builtin(evt)
+builtin(hdl)
+builtin(irc)
+builtin(krn)
+builtin(lst)
+builtin(obj)
+builtin(opt)
+builtin(prs)
+builtin(thr)
+builtin(adm)
+builtin(fnd)
+builtin(log)
+builtin(rss)
+builtin(tdo)
+builtin(udp)
+builtin(utl)
+builtin(ver)

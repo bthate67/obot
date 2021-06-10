@@ -17,7 +17,7 @@ from thr import launch
 
 def __dir__():
     return ('Cfg', 'Kernel', 'Repeater', 'Timer', 'all', 'debug', 'deleted',
-            'every', 'find', 'fns', 'fntime', 'hook', 'last', 'lastfn',
+            'every', 'find', 'fns', 'fntime', 'hook', "kcmd", 'last', 'lastfn',
             'lastmatch', 'lasttype', 'listfiles')
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo"
