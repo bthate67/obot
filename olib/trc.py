@@ -14,8 +14,8 @@ def get_exception(txt="", sep=" "):
         else:
             plugfile = elem[0].split(os.sep)
         mod = []
-        for element in plugfile[:-3:-1]:
-            mod.append(element)
+        for element in plugfile[:-2:-1]:
+            mod.append(element.split(".")[-1])
         ownname = ".".join(mod[::-1])
         result.append("%s:%s" % (ownname, elem[1]))
     res = "%s %s: %s %s" % (sep.join(result), exctype, excvalue, str(txt))

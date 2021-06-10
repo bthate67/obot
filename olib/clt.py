@@ -1,12 +1,11 @@
 # This file is placed in the Public Domain.
 
+import hdl
 import queue
+import thr
+import utl
 
-from evt import Command
-from hdl import ENOMORE, Handler, docmd
-from thr import launch
-
-class Client(Handler):
+class Client(hdl.Handler):
 
     def __init__(self):
         super().__init__()
@@ -16,6 +15,12 @@ class Client(Handler):
 
     def announce(self, txt):
         self.raw(txt)
+
+    def cmd(self, txt):
+        e = Command()
+        e.orig = self.__dorepr__()
+        e.txt = txt
+        return hdl.docmd(c, e)
 
     def event(self, txt):
         c = Command()
@@ -60,10 +65,32 @@ class Client(Handler):
         self.running = True
         self.initialize()
         super().start()
-        launch(self.input)
+        thr.launch(self.input)
 
     def stop(self):
         self.running = False
         self.stopped = True
         self.iqueue.put(None)
         super().stop()
+
+class CLI(Client):
+
+    def error(self, e):
+        utl.cprint(e.exc)
+        raise RestartError
+
+    def raw(self, txt):
+        utl.cprint(txt)
+
+class Console(CLI):
+
+    def handle(self, e):
+        self.put(e)
+        e.wait()
+
+    def poll(self):
+        return input("> ")
+
+    def start(self):
+        self.register("cmd", krn.kcmd)
+        super().start()

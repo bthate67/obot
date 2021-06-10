@@ -38,28 +38,36 @@ def find_cls(mod):
         res[o.__name__] = o
     return res
 
-def wrap(func):
-    trm.termsave()
-    try:
-        func()
-    except PermissionError as ex:
-        cprint(str(ex))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        trm.termreset()
+def kcmd(hdl, obj):
+    obj.parse()
+    f = krn.Kernel.getcmd(obj.cmd)
+    if f:
+        f(obj)
+        obj.show()
+    sys.stdout.flush()
+    obj.ready()
 
-def privileges(name):
+def privileges(name=None):
     if os.getuid() != 0:
         return
+    if name is None:
+        try:
+            name = getpass.getuser()
+        except KeyError:
+            pass
     try:
-        pwn = pwd.getpwnam(name)
+        pwnam = pwd.getpwnam(name)
     except KeyError:
-        return
+        return False
     os.setgroups([])
-    os.setgid(pwn.pw_gid)
-    os.setuid(pwn.pw_uid)
+    os.setgid(pwnam.pw_gid)
+    os.setuid(pwnam.pw_uid)
     old_umask = os.umask(0o22)
+    return True
+
+def root():
+    if os.geteuid() != 0:
+        return False
     return True
 
 def scan(path, base=None):
@@ -77,3 +85,14 @@ def scan(path, base=None):
         krn.Kernel.addmod(mod)
         if "register" in dir(mod):
             mod.register(krn.Kernel)
+
+def wrap(func):
+    trm.termsave()
+    try:
+        func()
+    except PermissionError as ex:
+        cprint(str(ex))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        trm.termreset()

@@ -5,10 +5,6 @@ from obj import Object
 
 import datetime
 
-class ENOTXT(Exception):
-
-    pass
-
 class Token(Object):
 
     def __init__(self, txt):
@@ -114,7 +110,7 @@ def elapsed(seconds, short=True):
 
 def parse_txt(o, ptxt=None):
     if ptxt is None:
-        raise ENOTXT(o)
+        raise NoTextError(o)
     o.txt = ptxt
     o.otxt = ptxt
     o.gets = Default()

@@ -26,6 +26,7 @@ class CLI(Client):
 
     def error(self, e):
         utl.cprint(e.exc)
+        raise RestartError
 
     def raw(self, txt):
         utl.cprint(txt)
@@ -40,11 +41,11 @@ class Console(CLI):
         return input("> ")
 
     def start(self):
-        self.register("cmd", krn.kcmd)
+        self.register("cmd", utl.kcmd)
         super().start()
 
 def rse(event):
-    raise ENOMORE
+    raise RestartError
 
 def main():
     obj.cfg.wd = os.path.expanduser("~/.%s" % name)
@@ -60,7 +61,7 @@ def main():
         e = Command()
         e.orig = c.__dorepr__()
         e.txt = k.cfg.otxt
-        return kcmd(c, e)
+        return utl.kcmd(c, e)
     if k.opts("d"):
         daemon()
     else:

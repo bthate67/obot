@@ -10,6 +10,7 @@ import cmd
 import cms
 import dbs
 import dft
+import err
 import evt
 import hdl
 import irc
@@ -28,6 +29,7 @@ import udp
 import utl
 import ver
 
+builtin(err)
 builtin(bus)
 builtin(cfg)
 builtin(clk)

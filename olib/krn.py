@@ -14,6 +14,7 @@ from evt import Command
 from obj import Object, cdir, cfg, spl
 from prs import parse_txt
 from thr import launch
+from utl import privileges
 
 def __dir__():
     return ('Cfg', 'Kernel', 'Repeater', 'Timer', 'all', 'debug', 'deleted',
@@ -21,14 +22,6 @@ def __dir__():
             'lastmatch', 'lasttype', 'listfiles')
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo"
-
-class ENOCLASS(Exception):
-
-    pass
-
-class ENOTYPE(Exception):
-
-    pass
 
 class Cfg(Default):
 
@@ -100,7 +93,7 @@ class Kernel(Object):
         if "." in name:
             mn, clsn = name.rsplit(".", 1)
         else:
-            raise ENOCLASS(name)
+            raise NoClassError(name)
         mod = Kernel.getmod(mn)
         return getattr(mod, clsn, None)
 
@@ -157,52 +150,3 @@ class Kernel(Object):
     def wait():
         while 1:
             time.sleep(5.0)
-
-
-def kcmd(hdl, obj):
-    obj.parse()
-    f = Kernel.getcmd(obj.cmd)
-    if f:
-        f(obj)
-        obj.show()
-    sys.stdout.flush()
-    obj.ready()
-
-def hook(hfn):
-    if hfn.count(os.sep) > 3:
-        oname = hfn.split(os.sep)[-4:]
-    else:
-        oname = hfn.split(os.sep)
-    cname = oname[0]
-    fn = os.sep.join(oname)
-    t = Kernel.getcls(cname)
-    if not t:
-        raise ENOTYPE(cname)
-    if fn:
-        o = t()
-        o.load(fn)
-        return o
-    raise ENOTYPE(cname)
-
-def privileges(name=None):
-    if os.getuid() != 0:
-        return
-    if name is None:
-        try:
-            name = getpass.getuser()
-        except KeyError:
-            pass
-    try:
-        pwnam = pwd.getpwnam(name)
-    except KeyError:
-        return False
-    os.setgroups([])
-    os.setgid(pwnam.pw_gid)
-    os.setuid(pwnam.pw_uid)
-    old_umask = os.umask(0o22)
-    return True
-
-def root():
-    if os.geteuid() != 0:
-        return False
-    return True

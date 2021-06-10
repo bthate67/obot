@@ -10,8 +10,7 @@ import types
 import uuid
 
 def __dir__():
-    return ('ENOCLASS', 'ENOFILENAME', 'ENOTYPE', 'O', 'Obj',
-            'Object', 'cdir', 'edit', 'fmt', 'get', 'getname',
+    return ('O', 'Obj', 'Object', 'cdir', 'edit', 'fmt', 'get', 'getname',
             'gettype', 'items', 'keys', 'load', 'merge', 'overlay', 'register',
             'save', 'search', 'set', 'spl', 'update', 'values', 'wd')
 
@@ -27,18 +26,6 @@ def gettype(o):
 
 def spl(txt):
     return [x for x in txt.split(",") if x]
-
-class ENOTYPE(Exception):
-
-    pass
-
-class ENOCLASS(Exception):
-
-    pass
-
-class ENOFILENAME(Exception):
-
-    pass
 
 class O:
 
@@ -141,7 +128,7 @@ class Object(Obj):
     def load(self, opath):
         assert cfg.wd
         if opath.count(os.sep) != 3:
-            raise ENOFILENAME(opath)
+            raise NoFilenameError(opath)
         spl = opath.split(os.sep)
         stp = os.sep.join(spl[-4:])
         lpath = os.path.join(cfg.wd, "store", stp)
@@ -233,7 +220,7 @@ def keys(o):
 def load(o, opath):
     assert cfg.wd
     if opath.count(os.sep) != 3:
-        raise ENOFILENAME(opath)
+        raise NoFilenameError(opath)
     spl = opath.split(os.sep)
     stp = os.sep.join(spl[-4:])
     lpath = os.path.join(cfg.wd, "store", stp)

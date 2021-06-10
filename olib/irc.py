@@ -18,11 +18,11 @@ from hdl import end
 from clt import Client
 from opt import Output
 from thr import launch
-from krn import kcmd
 from obj import Object, edit, fmt
+from utl import kcmd
 
 def __dir__():
-    return ("ENOUSER", "Cfg", "DCC", "Event", "IRC", "User", "Users", "cfg", "dlt", "init", "locked", "met", "mre", "register")
+    return ("Cfg", "DCC", "Event", "IRC", "User", "Users", "cfg", "dlt", "init", "locked", "met", "mre", "register")
 
 def init():
     i = IRC()
@@ -53,10 +53,6 @@ def locked(l):
     return lockeddec
 
 saylock = _thread.allocate_lock()
-
-class ENOUSER(Exception):
-
-    pass
 
 class Cfg(Default):
 
@@ -453,7 +449,7 @@ class Users(Object):
     def perm(self, origin, permission):
         user = self.get_user(origin)
         if not user:
-            raise ENOUSER(origin)
+            raise NoUserError(origin)
         if permission.upper() not in user.perms:
             user.perms.append(permission.upper())
             user.save()

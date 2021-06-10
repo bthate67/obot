@@ -9,10 +9,6 @@ from obj import Object
 from thr import launch
 from trc import get_exception
 
-class ENOMORE(Exception):
-
-    pass
-
 class Handler(Object):
 
     def __init__(self):
@@ -33,17 +29,25 @@ class Handler(Object):
         pass
 
     def handler(self):
+        dorestart = False
         while not self.stopped:
             e = self.queue.get()
             if not e:
                 break
             try:
                 self.callbacks(e)
+            except RestartError:
+                dorestart = True
+                break
+            except StopError:
+                break
             except Exception as ex:
                 e = Event()
                 e.type = "error"
                 e.exc = get_exception()
                 self.error(e)
+        if dorestart:
+            self.restart()
 
     def initialize(self):
         Bus.add(self)
@@ -82,4 +86,5 @@ def docmd(hdl, obj):
     obj.ready()
 
 def end(hdl, obj):
-    raise ENOMORE
+    raise StopError
+

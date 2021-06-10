@@ -6,10 +6,6 @@ import time
 from krn import Kernel
 from obj import cfg, gettype, search
 
-class ENOTYPE(Exception):
-
-    pass
-
 def all(otype, selector=None, index=None, timed=None):
     nr = -1
     if selector is None:
@@ -143,12 +139,12 @@ def hook(hfn):
     fn = os.sep.join(oname)
     t = Kernel.getcls(cname)
     if not t:
-        raise ENOTYPE(cname)
+        raise NoTypeError(cname)
     if fn:
         o = t()
         o.load(fn)
         return o
-    raise ENOTYPE(cname)
+    raise NoTypeError(cname)
 
 def listfiles(wd):
     path = os.path.join(wd, "store")
