@@ -25,7 +25,7 @@ name = "obot"
 class CLI(Client):
 
     def error(self, e):
-        utl.cprint(e.trc)
+        utl.cprint(e.exc)
 
     def raw(self, txt):
         utl.cprint(txt)
@@ -43,9 +43,13 @@ class Console(CLI):
         self.register("cmd", krn.kcmd)
         super().start()
 
+def rse(event):
+    raise ENOMORE
+
 def main():
     obj.cfg.wd = os.path.expanduser("~/.%s" % name)
     k = Kernel()
+    k.addcmd(rse)
     k.parse()
     k.boot(name, __version__)
     k.regs(all)
