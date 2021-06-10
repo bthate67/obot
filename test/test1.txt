@@ -25,5 +25,6 @@
 'obj.Object/...
 >>> oo = Object()
 >>> oo.load(p)
+{"key": "value"}
 >>> oo.key
 'value'
