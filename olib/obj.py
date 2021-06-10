@@ -164,7 +164,7 @@ class Object(Obj):
 
 cfg = Object()
 cfg.debug = False
-cfg.wd = ""
+cfg.wd = ".olib"
 
 def edit(o, setter, skip=False):
     count = 0

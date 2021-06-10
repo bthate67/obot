@@ -2,23 +2,21 @@
 
 import builtins
 import importlib
+import inspect
+import krn
 import os
 import pwd
 import sys
-
-import krn
 import trm
 
-def builtin(o):
-    b = dir(builtins)
-    for nm in dir(o):
-        if nm not in b:
-            v = getattr(o, nm, None)
-            if v:
-                setattr(builtins, nm, v)
+def builtin(mod):
+    classes = find_cls(mod)
+    for nm, c in classes.items():
+        cprint(nm, c)
+        setattr(builtins, nm, c)
 
-def cprint(txt):
-    print(txt)
+def cprint(*args):
+    print(*args)
     sys.stdout.flush()
 
 def daemon():
@@ -34,6 +32,12 @@ def daemon():
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
+
+def find_cls(mod):
+    res = {}
+    for key, o in inspect.getmembers(mod, inspect.isclass):
+        res[o.__name__] = o
+    return res
 
 def wrap(func):
     trm.termsave()
