@@ -6,14 +6,18 @@ __version__ = 101
 import os, sys ; sys.path.insert(0, "olib")
 
 import all
+import blt
 import atexit
 import importlib
+import krn
+import obj
 import os
 import pwd
 import readline
 import shutil
 import sys
 import termios
+import utl
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
 name = "obot"
@@ -21,10 +25,10 @@ name = "obot"
 class CLI(Client):
 
     def error(self, e):
-        cprint(e.trc)
+        utl.cprint(e.trc)
 
     def raw(self, txt):
-        cprint(txt)
+        utl.cprint(txt)
 
 class Console(CLI):
 
@@ -36,16 +40,16 @@ class Console(CLI):
         return input("> ")
 
     def start(self):
-        self.register("cmd", kcmd)
+        self.register("cmd", krn.kcmd)
         super().start()
 
 def main():
-    cfg.wd = os.path.expanduser("~/.%s" % name)
+    obj.cfg.wd = os.path.expanduser("~/.%s" % name)
     k = Kernel()
     k.parse()
     k.boot(name, __version__)
     k.regs(all)
-    scan("omod")
+    utl.scan("omod")
     if k.cfg.txt:
         c = CLI()
         c.start()
@@ -61,4 +65,4 @@ def main():
     k.init(k.cfg.mods)
     k.wait()
 
-wrap(main)
+utl.wrap(main)

@@ -150,6 +150,7 @@ class Object(Obj):
                 d = js.load(ofile, object_hook=Obj)
                 self.update(d)
         self.__stp__ = stp
+        return self
 
     def save(self, tab=False):
         assert cfg.wd

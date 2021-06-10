@@ -12,7 +12,6 @@ import trm
 def builtin(mod):
     classes = find_cls(mod)
     for nm, c in classes.items():
-        cprint(nm, c)
         setattr(builtins, nm, c)
 
 def cprint(*args):
