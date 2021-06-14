@@ -2,15 +2,18 @@
 
 "database,timer and tables"
 
+import dft
 import getpass
+import hdl
+import obj
 import os
+import prs
 import pwd
 import sys
+import thr
 import time
+import utl
 
-from clt import Client
-from dft import Default
-from evt import Command
 from obj import Object, cdir, cfg, spl
 from prs import parse_txt
 from thr import launch
@@ -23,16 +26,16 @@ def __dir__():
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo"
 
-class Cfg(Default):
+class Cfg(dft.Default):
 
     pass
 
-class Kernel(Object):
+class Kernel(hdl.Handler):
 
     cfg = Cfg()
     cmds = Object()
     fulls = Object()
-    names = Default()
+    names = dft.Default()
     modules = Object()
     table = Object()
 
@@ -63,8 +66,8 @@ class Kernel(Object):
         Kernel.cfg.mods += "," + mns
         Kernel.cfg.version = version
         Kernel.cfg.update(Kernel.cfg.sets)
-        Kernel.cfg.wd = cfg.wd = Kernel.cfg.wd or cfg.wd
-        cdir(Kernel.cfg.wd + os.sep)
+        Kernel.cfg.wd = obj.cfg.wd = Kernel.cfg.wd or obj.cfg.wd
+        obj.cdir(Kernel.cfg.wd + os.sep)
         try:
             pwn = pwd.getpwnam(name)
         except KeyError:

@@ -17,7 +17,8 @@ class Handler(Object):
         self.queue = queue.Queue()
         self.ready = threading.Event()
         self.speed = "normal"
-        self.stopped = False
+        self.started = threading.Event()
+        self.stopped = threading.Event()
 
     def callbacks(self, event):
         if event and event.type in self.cbs:
@@ -30,10 +31,9 @@ class Handler(Object):
 
     def handler(self):
         dorestart = False
-        while not self.stopped:
+        self.stopped.clear()
+        while not self.stopped.isSet():
             e = self.queue.get()
-            if not e:
-                break
             try:
                 self.callbacks(e)
             except RestartError:
@@ -59,17 +59,16 @@ class Handler(Object):
         self.cbs[name] = callback
 
     def restart(self):
-        self.stop()
-        self.start()        
+        pass
 
     def start(self):
         self.initialize()
-        self.stopped = False
+        self.stopped.clear()
         launch(self.handler)
         return self
 
     def stop(self):
-        self.stopped = True
+        self.stopped.set()
         e = Event()
         e.type = "end"
         self.queue.put(e)
@@ -87,4 +86,3 @@ def docmd(hdl, obj):
 
 def end(hdl, obj):
     raise StopError
-

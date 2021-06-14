@@ -9,15 +9,19 @@ import pwd
 import sys
 import trm
 
+reserved = ["cdir", "wrap"]
+
 def builtin(mod):
     classes = find_cls(mod)
     for nm, c in classes.items():
         setattr(builtins, nm, c)
-
-def cprint(*args):
-    print(*args)
-    sys.stdout.flush()
-
+    commands = find_cmd(mod)
+    for nm, c in commands.items():
+        setattr(builtins, nm, c)
+    functions = find_func(mod)
+    for nm, f in functions.items():
+        setattr(builtins, nm, f)
+        
 def daemon():
     pid = os.fork()
     if pid != 0:
@@ -36,6 +40,21 @@ def find_cls(mod):
     res = {}
     for key, o in inspect.getmembers(mod, inspect.isclass):
         res[o.__name__] = o
+    return res
+
+def find_cmd(mod):
+    res = {}
+    for key, o in inspect.getmembers(mod, inspect.isfunction):
+        if o.__code__.co_argcount == 1 and "event" in o.__code__.co_varnames:
+            res[o.__name__] = o
+    return res
+
+def find_func(mod):
+    res = {}
+    for key, o in inspect.getmembers(mod, inspect.isfunction):
+        if key in reserved:
+            if "event" not in o.__code__.co_varnames:
+                res[o.__name__] = o
     return res
 
 def kcmd(hdl, obj):

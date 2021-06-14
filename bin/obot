@@ -25,24 +25,28 @@ name = "obot"
 class CLI(Client):
 
     def error(self, e):
-        utl.cprint(e.exc)
+        cprint(e.exc)
         raise RestartError
 
     def raw(self, txt):
-        utl.cprint(txt)
+        cprint(txt)
 
 class Console(CLI):
 
     def handle(self, e):
-        self.put(e)
+        super().handle(e)
         e.wait()
 
     def poll(self):
         return input("> ")
 
     def start(self):
-        self.register("cmd", utl.kcmd)
         super().start()
+        self.register("cmd", utl.kcmd)
+
+def cprint(*args):
+    print(*args)
+    sys.stdout.flush()
 
 def rse(event):
     raise RestartError
@@ -56,7 +60,7 @@ def main():
     k.regs(all)
     utl.scan("omod")
     if k.cfg.txt:
-        c = CLI()
+        c = CLI(k)
         c.start()
         e = Command()
         e.orig = c.__dorepr__()
@@ -65,7 +69,7 @@ def main():
     if k.opts("d"):
         daemon()
     else:
-        c = Console()
+        c = Console(k)
         c.start()
     k.init(k.cfg.mods)
     k.wait()

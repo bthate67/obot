@@ -1,29 +1,33 @@
 # This file is placed in the Public Domain.
 
-import hdl
+import bus
+import evt
+import obj
 import queue
 import thr
+import threading
 import utl
 
-class Client(hdl.Handler):
+class Client(obj.Object):
 
-    def __init__(self):
+    def __init__(self, target):
         super().__init__()
         self.iqueue = queue.Queue()
-        self.stopped = False
-        self.running = False
+        self.speed = "normal"
+        self.stopped = threading.Event()
+        self.target = target
 
     def announce(self, txt):
         self.raw(txt)
 
     def cmd(self, txt):
-        e = Command()
+        e = evt.Command()
         e.orig = self.__dorepr__()
         e.txt = txt
         return hdl.docmd(c, e)
 
     def event(self, txt):
-        c = Command()
+        c = evt.Command()
         if txt is None:
             c.type = "end"
         else:
@@ -32,18 +36,17 @@ class Client(hdl.Handler):
         return c
 
     def handle(self, e):
-        super().put(e)
+        self.target.put(e)
 
     def input(self):
-        while not self.stopped:
+        while not self.stopped.isSet():
             e = self.once()
             if not e:
                 break
             self.handle(e)
 
     def once(self):
-        txt = self.poll()
-        return self.event(txt)
+        return self.event(self.poll())
 
     def poll(self):
         return self.iqueue.get()
@@ -59,38 +62,9 @@ class Client(hdl.Handler):
         self.raw(txt)
 
     def start(self):
-        if self.running:
-            return
-        self.stopped = False
-        self.running = True
-        self.initialize()
-        super().start()
+        bus.Bus.add(self)
         thr.launch(self.input)
 
     def stop(self):
-        self.running = False
-        self.stopped = True
+        self.stopped.set()
         self.iqueue.put(None)
-        super().stop()
-
-class CLI(Client):
-
-    def error(self, e):
-        utl.cprint(e.exc)
-        raise RestartError
-
-    def raw(self, txt):
-        utl.cprint(txt)
-
-class Console(CLI):
-
-    def handle(self, e):
-        self.put(e)
-        e.wait()
-
-    def poll(self):
-        return input("> ")
-
-    def start(self):
-        self.register("cmd", krn.kcmd)
-        super().start()
