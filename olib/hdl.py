@@ -49,9 +49,6 @@ class Handler(Object):
         if dorestart:
             self.restart()
 
-    def initialize(self):
-        Bus.add(self)
-
     def put(self, e):
         self.queue.put_nowait(e)
 
@@ -59,11 +56,10 @@ class Handler(Object):
         self.cbs[name] = callback
 
     def restart(self):
-        pass
+        self.stop()
+        self.start()
 
     def start(self):
-        self.initialize()
-        self.stopped.clear()
         launch(self.handler)
         return self
 
@@ -86,3 +82,4 @@ def docmd(hdl, obj):
 
 def end(hdl, obj):
     raise StopError
+ 

@@ -34,7 +34,7 @@ class CLI(Client):
 class Console(CLI):
 
     def handle(self, e):
-        super().handle(e)
+        self.target.put(e)
         e.wait()
 
     def poll(self):
@@ -58,6 +58,7 @@ def main():
     k.parse()
     k.boot(name, __version__)
     k.regs(all)
+    k.start()
     utl.scan("omod")
     if k.cfg.txt:
         c = CLI(k)

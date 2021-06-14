@@ -128,6 +128,16 @@ class Kernel(hdl.Handler):
             if "init" in dir(mod):
                 launch(mod.init)
 
+
+    def kcmd(hdl, obj):
+        obj.parse()
+        f = krn.Kernel.getcmd(obj.cmd)
+        if f:
+            f(obj)
+            obj.show()
+        sys.stdout.flush()
+        obj.ready()
+
     @staticmethod
     def opts(ops):
         for opt in ops:
@@ -148,6 +158,10 @@ class Kernel(hdl.Handler):
             mod = Kernel.getmod(mnn)
             if "register" in dir(mod):
                 mod.register(Kernel)
+
+    def start(self):
+        super().start()
+        self.register("cmd", utl.kcmd)
 
     @staticmethod
     def wait():
