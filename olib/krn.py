@@ -126,7 +126,7 @@ class Kernel(hdl.Handler):
             mnn = Kernel.getfull(mn)
             mod = Kernel.getmod(mnn)
             if "init" in dir(mod):
-                launch(mod.init)
+                launch(mod.init, Kernel)
 
 
     def kcmd(hdl, obj):

@@ -14,7 +14,7 @@ from bus import Bus
 from dbs import find, last
 from dft import Default
 from evt import Event
-from hdl import end
+from hdl import Handler, end
 from clt import Client
 from opt import Output
 from thr import launch
@@ -24,9 +24,8 @@ from utl import kcmd
 def __dir__():
     return ("Cfg", "DCC", "Event", "IRC", "User", "Users", "cfg", "dlt", "init", "locked", "met", "mre", "register")
 
-def init():
-    i = IRC()
-    i.initialize(kcmd)
+def init(k):
+    i = IRC(k)
     launch(i.start)
     return i
 
@@ -93,10 +92,10 @@ class TextWrap(textwrap.TextWrapper):
         self.tabsize = 4
         self.width = 450
 
-class IRC(Client, Output):
+class IRC(Client, Handler, Output):
 
-    def __init__(self):
-        Client.__init__(self)
+    def __init__(self, target):
+        Client.__init__(self, target)
         Output.__init__(self)
         self.buffer = []
         self.cfg = Cfg()
@@ -147,6 +146,7 @@ class IRC(Client, Output):
 
     def connect(self, server, port=6667):
         addr = socket.getaddrinfo(server, port, socket.AF_INET)[-1][-1]
+        print(addr)
         self.sock = socket.create_connection(addr)
         os.set_inheritable(self.fileno(), os.O_RDWR)
         self.sock.setblocking(True)
@@ -156,13 +156,10 @@ class IRC(Client, Output):
 
     def doconnect(self, server, nick, port=6667):
         self.state.nrconnect = 0
-        while not self.stopped:
+        while not self.stopped.isSet():
             self.state.nrconnect += 1
-            try:
-                if self.connect(server, port):
-                    break
-            except (ConnectionResetError, OSError):
-                pass
+            if self.connect(server, port):
+                break
             time.sleep(10.0 * self.state.nrconnect)
         self.logon(server, nick)
 
@@ -211,7 +208,7 @@ class IRC(Client, Output):
             self.command("JOIN", channel)
 
     def keep(self):
-        while not self.stopped:
+        while not self.stopped.isSet():
             self.keeprunning = True
             time.sleep(60)
             self.state.pongcheck = True
@@ -327,13 +324,14 @@ class IRC(Client, Output):
         last(self.cfg)
         if self.cfg.channel not in self.channels:
             self.channels.append(self.cfg.channel)
-        self.stopped = False
+        self.stopped.clear()
         self.connected.clear()
         self.joined.clear()
         self.sock = None
         self.doconnect(self.cfg.server,
                        self.cfg.nick,
                        int(self.cfg.port))
+        self.connected.wait()
         Client.start(self)
         Output.start(self)
         Bus.add(self)
@@ -342,7 +340,7 @@ class IRC(Client, Output):
         self.wait()
 
     def stop(self):
-        self.stopped = True
+        self.stopped.set()
         try:
             self.sock.shutdown(2)
         except OSError:
@@ -361,8 +359,6 @@ class DCC(Client):
         self.origin = ""
         self.sock = None
         self.speed = "fast"
-        self.stopped = False
-        self.initialize(kcmd)
 
     def raw(self, txt):
         self.sock.send(bytes("%s\n" % txt.rstrip(), self.encoding))
