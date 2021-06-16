@@ -24,6 +24,7 @@ import adm
 import fnd
 import log
 import rss
+import slg
 import tdo
 import udp
 import utl
@@ -54,4 +55,5 @@ builtin(rss)
 builtin(tdo)
 builtin(udp)
 builtin(utl)
+builtin(slg)
 builtin(ver)

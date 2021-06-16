@@ -19,7 +19,7 @@ import sys
 import termios
 import utl
 
-all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
+all = "adm,cms,fnd,irc,krn,log,rss,slg,tdo,ver"
 name = "obot"
 
 class CLI(Client):

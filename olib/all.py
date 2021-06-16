@@ -24,6 +24,7 @@ import adm
 import fnd
 import log
 import rss
+import slg
 import tdo
 import udp
 import utl
@@ -55,3 +56,4 @@ Kernel.addmod(thr)
 Kernel.addmod(udp)
 Kernel.addmod(utl)
 Kernel.addmod(ver)
+Kernel.addmod(slg)

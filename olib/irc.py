@@ -96,6 +96,7 @@ class IRC(Client, Handler, Output):
 
     def __init__(self, target):
         Client.__init__(self, target)
+        Handler.__init__()
         Output.__init__(self)
         self.buffer = []
         self.cfg = Cfg()
@@ -332,7 +333,8 @@ class IRC(Client, Handler, Output):
                        self.cfg.nick,
                        int(self.cfg.port))
         self.connected.wait()
-        Client.start(self)
+        Client.start(self, Kernel)
+        Handler.start(self)
         Output.start(self)
         Bus.add(self)
         if not self.keeprunning:
