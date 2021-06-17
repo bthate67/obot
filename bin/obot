@@ -3,13 +3,17 @@
 
 __version__ = 101
 
-import os, sys ; sys.path.insert(0, "olib")
+import os, sys
+
+sys.path.insert(0, "olib")
+sys.path.insert(0, os.getcwd())
 
 from clt import Client
+from err import Restart
 from krn import Kernel
 from obj import cfg
 from tbl import Table, scan
-from utl import wrap
+from trm import termreset, termsave
 
 name = "obot"
 
@@ -17,7 +21,7 @@ class CLI(Client):
 
     def error(self, e):
         cprint(e.exc)
-        raise RestartError
+        raise Restart
 
     def raw(self, txt):
         cprint(txt)
@@ -27,16 +31,23 @@ class Console(CLI):
     def poll(self):
         return input("> ")
 
-    def start(self):
-        super().start()
-        self.register("cmd", Kernel.dispatch)
-
 def cprint(*args):
     print(*args)
     sys.stdout.flush()
 
+def wrap(func):
+    termsave()
+    try:
+        func()
+    except PermissionError as ex:
+        cprint(str(ex))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        termreset()
+
 def rse(event):
-    raise RestartError
+    raise Restart
 
 def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
@@ -45,14 +56,14 @@ def main():
     k.parse()
     k.boot(name, __version__)
     k.start()
-    scan("olib")
-    scan("omod")
+    k.scan("olib")
+    k.scan("omod")
     if k.cfg.txt:
         c = CLI()
         c.start()
         return k.cmd(c, k.cfg.otxt)
     if k.opts("d"):
-        daemon()
+        k.daemon()
     else:
         c = Console()
         c.start()

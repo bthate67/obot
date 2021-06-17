@@ -16,16 +16,9 @@ class Client(obj.Object):
         self.queue = queue.Queue()
         self.speed = "normal"
         self.stopped = threading.Event()
-        self.target = krn.Kernel
 
     def announce(self, txt):
         self.raw(txt)
-
-    def cmd(self, txt):
-        e = evt.Command()
-        e.orig = self.__dorepr__()
-        e.txt = txt
-        return hdl.docmd(c, e)
 
     def event(self, txt):
         c = evt.Command()
@@ -33,15 +26,15 @@ class Client(obj.Object):
         c.orig = self.__dorepr__()
         return c
 
-    def handle(self, e):
-        self.target.put(self, e)
-
     def input(self):
         while not self.stopped.isSet():
             e = self.once()
             if not e:
                 break
             self.handle(e)
+
+    def handle(self, e):
+        krn.Kernel.put(self, e)
 
     def once(self):
         return self.event(self.poll())

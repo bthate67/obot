@@ -2,7 +2,7 @@
 
 "commands"
 
-from krn import Kernel
+from tbl import Table
 
 def __dir__():
     return ("cmd", "register")
@@ -11,4 +11,4 @@ def register(k):
     k.addcmd(cmd)
 
 def cmd(event):
-    event.reply(",".join(sorted(Kernel.modules)))
+    event.reply(",".join(sorted(Table.modules)))

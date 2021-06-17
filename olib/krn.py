@@ -2,50 +2,44 @@
 
 "database,timer and tables"
 
-import bus
-import dft
 import getpass
-import hdl
+import importlib
 import obj
 import os
-import prs
 import pwd
 import sys
-import tbl
-import thr
 import time
-import utl
 
-from obj import Object, cdir, cfg, spl
+from dft import Default
+from obj import Object, spl
 from prs import parse_txt
-from thr import launch
+from hdl import Handler
+from tbl import Table, builtin
 from utl import privileges
 
 def __dir__():
-    return ('Cfg', 'Kernel', 'Repeater', 'Timer', 'all', 'debug', 'deleted',
-            'every', 'find', 'fns', 'fntime', 'hook', 'last', 'lastfn',
-            'lastmatch', 'lasttype', 'listfiles')
+    return ('Cfg', 'Kernel')
 
-all = "adm,cms,fnd,irc,krn,log,rss,tdo"
-
-class Cfg(dft.Default):
+class Cfg(Default):
 
     pass
 
-class Kernel(hdl.Handler):
+class Kernel(Handler):
 
     cfg = Cfg()
-    cmds = Object()
     table = Object()
 
-    @staticmethod
-    def boot(name, version, mns=""):
-        Kernel.cfg.name = name
-        Kernel.cfg.mods += "," + mns
-        Kernel.cfg.version = version
-        Kernel.cfg.update(Kernel.cfg.sets)
-        Kernel.cfg.wd = obj.cfg.wd = Kernel.cfg.wd or obj.cfg.wd
-        obj.cdir(Kernel.cfg.wd + os.sep)
+    def __init__(self):
+        Table.__init__(self)
+        Handler.__init__(self)
+
+    def boot(self, name, version, mns=""):
+        self.cfg.name = name
+        self.cfg.mods += "," + mns
+        self.cfg.version = version
+        self.cfg.update(self.cfg.sets)
+        self.cfg.wd = obj.cfg.wd = self.cfg.wd or obj.cfg.wd
+        obj.cdir(self.cfg.wd + os.sep)
         try:
             pwn = pwd.getpwnam(name)
         except KeyError:
@@ -55,61 +49,95 @@ class Kernel(hdl.Handler):
             except KeyError:
                 return
         try:
-            os.chown(Kernel.cfg.wd, pwn.pw_uid, pwn.pw_gid)
+            os.chown(self.cfg.wd, pwn.pw_uid, pwn.pw_gid)
         except PermissionError:
             pass
-        privileges()
+        self.privileges()
 
     def cmd(self, clt, txt):
         e = clt.event(txt)
-        self.put(e)
+        self.dispatch(self, e)
         e.wait()
 
-    def getcmd(mn):
-        return tbl.Table.cmds.get(mn, None)
+    def daemon():
+        pid = os.fork()
+        if pid != 0:
+            trm.termreset()
+            os._exit(0)
+        os.setsid()
+        os.umask(0)
+        si = open("/dev/null", 'r')
+        so = open("/dev/null", 'a+')
+        se = open("/dev/null", 'a+')
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
 
-    def getmod(mn):
-        return tbl.Table.table.get(mn, None)
-
-    @staticmethod
-    def init(mns):
+    def init(self, mns):
         for mn in spl(mns):
-            mnn = tbl.Table.getfull(mn)
-            mod = tbl.Table.getmod(mnn)
+            mnn = Table.getfull(mn)
+            mod = Table.getmod(mnn)
             if "init" in dir(mod):
-                launch(mod.init, Kernel)
+                launch(mod.init, self)
 
-    @staticmethod
-    def dispatch(hdl, obj):
+    def dispatch(self, hdl, obj):
         obj.parse()
-        f = Kernel.getcmd(obj.cmd)
+        f = Table.getcmd(obj.cmd)
         if f:
             f(obj)
             obj.show()
-        print(obj)
         sys.stdout.flush()
         obj.ready()
 
-    @staticmethod
-    def opts(ops):
+    def opts(self, ops):
         for opt in ops:
-            if opt in Kernel.cfg.opts:
+            if opt in self.cfg.opts:
                 return True
         return False
 
-    @staticmethod
-    def parse():
-        parse_txt(Kernel.cfg, " ".join(sys.argv[1:]))
+    def parse(self):
+        parse_txt(self.cfg, " ".join(sys.argv[1:]))
 
     @staticmethod
-    def regs(mns):
-        if mns is None:
+    def privileges(name=None):
+        if os.getuid() != 0:
             return
-        for mn in spl(mns):
-            mnn = Kernel.getfull(mn)
-            mod = Kernel.getmod(mnn)
-            if "register" in dir(mod):
-                mod.register(Kernel)
+        if name is None:
+            try:
+                name = getpass.getuser()
+            except KeyError:
+                pass
+        try:
+            pwnam = pwd.getpwnam(name)
+        except KeyError:
+            return False
+        os.setgroups([])
+        os.setgid(pwnam.pw_gid)
+        os.setuid(pwnam.pw_uid)
+        old_umask = os.umask(0o22)
+        return True
+
+    @staticmethod
+    def root():
+        if os.geteuid() != 0:
+            return False
+        return True
+
+    @staticmethod
+    def scan(path, base=None):
+        if not os.path.exists(path):
+            return
+        if base is None:
+            base = os.path.abspath(path).split(os.sep)[-1]
+        sys.path.insert(0, base)
+        for p in os.listdir(path):
+            mn = p.split(os.sep)[-1][:-3]
+            try:
+                mod = importlib.import_module(mn)
+            except ModuleNotFoundError:
+                continue
+            builtin(mod)
+            Table.addmod(mod)
 
     def start(self):
         super().start()
@@ -119,3 +147,4 @@ class Kernel(hdl.Handler):
     def wait():
         while 1:
             time.sleep(5.0)
+
