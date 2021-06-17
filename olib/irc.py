@@ -19,13 +19,12 @@ from clt import Client
 from opt import Output
 from thr import launch
 from obj import Object, edit, fmt
-from utl import kcmd
 
 def __dir__():
     return ("Cfg", "DCC", "Event", "IRC", "User", "Users", "cfg", "dlt", "init", "locked", "met", "mre", "register")
 
 def init(k):
-    i = IRC(k)
+    i = IRC()
     launch(i.start)
     return i
 
@@ -94,9 +93,9 @@ class TextWrap(textwrap.TextWrapper):
 
 class IRC(Client, Handler, Output):
 
-    def __init__(self, target):
-        Client.__init__(self, target)
-        Handler.__init__()
+    def __init__(self):
+        Client.__init__(self)
+        Handler.__init__(self)
         Output.__init__(self)
         self.buffer = []
         self.cfg = Cfg()
@@ -119,7 +118,7 @@ class IRC(Client, Handler, Output):
         self.threaded = False
         self.users = Users()
         self.zelf = ""
-        self.register("cmd", kcmd)
+        self.register("cmd", Kernel.dispatch)
         self.register("end", end)
         self.register("ERROR", ERROR)
         self.register("LOG", LOG)
@@ -147,7 +146,6 @@ class IRC(Client, Handler, Output):
 
     def connect(self, server, port=6667):
         addr = socket.getaddrinfo(server, port, socket.AF_INET)[-1][-1]
-        print(addr)
         self.sock = socket.create_connection(addr)
         os.set_inheritable(self.fileno(), os.O_RDWR)
         self.sock.setblocking(True)
@@ -333,7 +331,7 @@ class IRC(Client, Handler, Output):
                        self.cfg.nick,
                        int(self.cfg.port))
         self.connected.wait()
-        Client.start(self, Kernel)
+        Client.start(self)
         Handler.start(self)
         Output.start(self)
         Bus.add(self)

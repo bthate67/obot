@@ -36,10 +36,10 @@ class Handler(Object):
             e = self.queue.get()
             try:
                 self.callbacks(e)
-            except RestartError:
+            except Restart:
                 dorestart = True
                 break
-            except StopError:
+            except Stop:
                 break
             except Exception as ex:
                 e = Event()
@@ -81,5 +81,5 @@ def docmd(hdl, obj):
     obj.ready()
 
 def end(hdl, obj):
-    raise StopError
+    raise Stop
  

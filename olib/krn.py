@@ -2,6 +2,7 @@
 
 "database,timer and tables"
 
+import bus
 import dft
 import getpass
 import hdl
@@ -10,6 +11,7 @@ import os
 import prs
 import pwd
 import sys
+import tbl
 import thr
 import time
 import utl
@@ -21,7 +23,7 @@ from utl import privileges
 
 def __dir__():
     return ('Cfg', 'Kernel', 'Repeater', 'Timer', 'all', 'debug', 'deleted',
-            'every', 'find', 'fns', 'fntime', 'hook', "kcmd", 'last', 'lastfn',
+            'every', 'find', 'fns', 'fntime', 'hook', 'last', 'lastfn',
             'lastmatch', 'lasttype', 'listfiles')
 
 all = "adm,cms,fnd,irc,krn,log,rss,tdo"
@@ -34,31 +36,7 @@ class Kernel(hdl.Handler):
 
     cfg = Cfg()
     cmds = Object()
-    fulls = Object()
-    names = dft.Default()
-    modules = Object()
     table = Object()
-
-    @staticmethod
-    def addcmd(func):
-        n = func.__name__
-        Kernel.modules[n] = func.__module__
-        Kernel.cmds[n] = func
-
-    @staticmethod
-    def addcls(clz):
-        n = clz.__name__.lower()
-        if n not in Kernel.names:
-            Kernel.names[n] = []
-        nn = "%s.%s" % (clz.__module__, clz.__name__)
-        if nn not in Kernel.names[n]:
-            Kernel.names[n].append(nn)
-
-    @staticmethod
-    def addmod(mod):
-        n = mod.__spec__.name
-        Kernel.fulls[n.split(".")[-1]] = n
-        Kernel.table[n] = mod
 
     @staticmethod
     def boot(name, version, mns=""):
@@ -82,59 +60,33 @@ class Kernel(hdl.Handler):
             pass
         privileges()
 
-    @staticmethod
-    def cmd(txt):
-        c = Client()
-        c.start()
-        e = Command()
-        e.orig = c.__dorepr__()
-        e.txt = txt
-        kcmd(c, e)
+    def cmd(self, clt, txt):
+        e = clt.event(txt)
+        self.put(e)
+        e.wait()
 
-    @staticmethod
-    def getcls(name):
-        if "." in name:
-            mn, clsn = name.rsplit(".", 1)
-        else:
-            raise NoClassError(name)
-        mod = Kernel.getmod(mn)
-        return getattr(mod, clsn, None)
+    def getcmd(mn):
+        return tbl.Table.cmds.get(mn, None)
 
-    @staticmethod
-    def getcmd(c):
-        return Kernel.cmds.get(c, None)
-
-    @staticmethod
-    def getfull(c):
-        return Kernel.fulls.get(c, None)
-
-    @staticmethod
     def getmod(mn):
-        return Kernel.table.get(mn, None)
-
-    @staticmethod
-    def getnames(nm, dft=None):
-        return Kernel.names.get(nm, dft)
-
-    @staticmethod
-    def getmodule(mn, dft):
-        return Kernel.modules.get(mn, dft)
+        return tbl.Table.table.get(mn, None)
 
     @staticmethod
     def init(mns):
         for mn in spl(mns):
-            mnn = Kernel.getfull(mn)
-            mod = Kernel.getmod(mnn)
+            mnn = tbl.Table.getfull(mn)
+            mod = tbl.Table.getmod(mnn)
             if "init" in dir(mod):
                 launch(mod.init, Kernel)
 
-
-    def kcmd(hdl, obj):
+    @staticmethod
+    def dispatch(hdl, obj):
         obj.parse()
-        f = krn.Kernel.getcmd(obj.cmd)
+        f = Kernel.getcmd(obj.cmd)
         if f:
             f(obj)
             obj.show()
+        print(obj)
         sys.stdout.flush()
         obj.ready()
 
@@ -161,7 +113,7 @@ class Kernel(hdl.Handler):
 
     def start(self):
         super().start()
-        self.register("cmd", utl.kcmd)
+        self.register("cmd", self.dispatch)
 
     @staticmethod
     def wait():

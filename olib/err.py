@@ -1,25 +1,25 @@
 # This file is placed in the Public Domain.
 
-class NoClassError(Exception):
+class NoClass(Exception):
 
     pass
 
-class NoTypeError(Exception):
+class NoType(Exception):
 
     pass
 
-class NoTextError(Exception):
+class NoText(Exception):
 
     pass
 
-class NoUserError(Exception):
+class NoUser(Exception):
 
     pass
 
-class RestartError(Exception):
+class Restart(Exception):
 
     pass
 
-class StopError(Exception):
+class Stop(Exception):
 
     pass

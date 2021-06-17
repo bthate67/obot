@@ -2,6 +2,7 @@
 
 import bus
 import evt
+import krn
 import obj
 import queue
 import thr
@@ -10,12 +11,12 @@ import utl
 
 class Client(obj.Object):
 
-    def __init__(self, target):
+    def __init__(self):
         super().__init__()
-        self.iqueue = queue.Queue()
+        self.queue = queue.Queue()
         self.speed = "normal"
         self.stopped = threading.Event()
-        self.target = target
+        self.target = krn.Kernel
 
     def announce(self, txt):
         self.raw(txt)
@@ -28,15 +29,12 @@ class Client(obj.Object):
 
     def event(self, txt):
         c = evt.Command()
-        if txt is None:
-            c.type = "end"
-        else:
-            c.txt = txt
+        c.txt = txt or ""
         c.orig = self.__dorepr__()
         return c
 
     def handle(self, e):
-        self.target.put(e)
+        self.target.put(self, e)
 
     def input(self):
         while not self.stopped.isSet():
@@ -49,7 +47,7 @@ class Client(obj.Object):
         return self.event(self.poll())
 
     def poll(self):
-        return self.iqueue.get()
+        return self.queue.get()
 
     def raw(self, txt):
         pass
@@ -67,4 +65,4 @@ class Client(obj.Object):
 
     def stop(self):
         self.stopped.set()
-        self.iqueue.put(None)
+        self.queue.put(None)
