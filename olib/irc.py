@@ -14,7 +14,7 @@ from bus import Bus
 from dbs import find, last
 from dft import Default
 from evt import Event
-from hdl import Handler, end
+from hdl import Handler
 from clt import Client
 from opt import Output
 from thr import launch
@@ -119,7 +119,6 @@ class IRC(Client, Handler, Output):
         self.users = Users()
         self.zelf = ""
         self.register("cmd", Kernel.dispatch)
-        self.register("end", end)
         self.register("ERROR", ERROR)
         self.register("LOG", LOG)
         self.register("NOTICE", NOTICE)

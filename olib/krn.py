@@ -1,7 +1,5 @@
 # This file is placed in the Public Domain.
 
-"database,timer and tables"
-
 import getpass
 import importlib
 import obj
@@ -15,7 +13,6 @@ from obj import Object, spl
 from prs import parse_txt
 from hdl import Handler
 from tbl import Table, builtin
-from utl import privileges
 
 def __dir__():
     return ('Cfg', 'Kernel')
@@ -28,11 +25,7 @@ class Kernel(Handler):
 
     cfg = Cfg()
     table = Object()
-
-    def __init__(self):
-        Table.__init__(self)
-        Handler.__init__(self)
-
+ 
     def boot(self, name, version, mns=""):
         self.cfg.name = name
         self.cfg.mods += "," + mns
@@ -54,8 +47,9 @@ class Kernel(Handler):
             pass
         self.privileges()
 
-    def cmd(self, clt, txt):
-        e = clt.event(txt)
+    def cmd(self, txt):
+        Bus.add(self)
+        e = self.event(txt)
         self.dispatch(self, e)
         e.wait()
 
@@ -79,15 +73,6 @@ class Kernel(Handler):
             mod = Table.getmod(mnn)
             if "init" in dir(mod):
                 launch(mod.init, self)
-
-    def dispatch(self, hdl, obj):
-        obj.parse()
-        f = Table.getcmd(obj.cmd)
-        if f:
-            f(obj)
-            obj.show()
-        sys.stdout.flush()
-        obj.ready()
 
     def opts(self, ops):
         for opt in ops:
@@ -123,6 +108,9 @@ class Kernel(Handler):
             return False
         return True
 
+    def say(self, channel, txt):
+        print(txt)
+
     @staticmethod
     def scan(path, base=None):
         if not os.path.exists(path):
@@ -137,14 +125,8 @@ class Kernel(Handler):
             except ModuleNotFoundError:
                 continue
             builtin(mod)
-            Table.addmod(mod)
-
-    def start(self):
-        super().start()
-        self.register("cmd", self.dispatch)
 
     @staticmethod
     def wait():
         while 1:
             time.sleep(5.0)
-

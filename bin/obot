@@ -8,8 +8,8 @@ import os, sys
 sys.path.insert(0, "olib")
 sys.path.insert(0, os.getcwd())
 
-from clt import Client
 from err import Restart
+from hdl import Handler
 from krn import Kernel
 from obj import cfg
 from tbl import Table, scan
@@ -17,20 +17,22 @@ from trm import termreset, termsave
 
 name = "obot"
 
-class CLI(Client):
+class Console(Handler):
 
     def error(self, e):
         cprint(e.exc)
         raise Restart
 
-    def raw(self, txt):
-        cprint(txt)
-
-class Console(CLI):
+    def handle(self, e):
+        super().handle(e)
+        e.wait()
 
     def poll(self):
         return input("> ")
 
+    def raw(self, txt):
+        cprint(txt)
+          
 def cprint(*args):
     print(*args)
     sys.stdout.flush()
@@ -59,14 +61,13 @@ def main():
     k.scan("olib")
     k.scan("omod")
     if k.cfg.txt:
-        c = CLI()
-        c.start()
-        return k.cmd(c, k.cfg.otxt)
+        return k.cmd(k.cfg.otxt)
     if k.opts("d"):
         k.daemon()
     else:
         c = Console()
         c.start()
+        Bus.add(c)
     k.init(k.cfg.mods)
     k.wait()
 
