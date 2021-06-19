@@ -1,7 +1,5 @@
 # This file is in the Public Domain.
 
-"administration"
-
 import threading
 import time
 
@@ -14,12 +12,6 @@ def __dir__():
     return ("flt", "krn", "register", "thr", "upt")
 
 starttime = time.time()
-
-def register(k):
-    k.addcmd(flt)
-    k.addcmd(krn)
-    k.addcmd(thr)
-    k.addcmd(upt)
 
 def flt(event):
     try:

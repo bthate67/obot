@@ -4,10 +4,12 @@ import getpass
 import importlib
 import obj
 import os
+import pkgutil
 import pwd
 import sys
 import time
 
+from bus import Bus
 from dft import Default
 from obj import Object, spl
 from prs import parse_txt
@@ -26,13 +28,14 @@ class Kernel(Handler):
     cfg = Cfg()
     table = Object()
  
-    def boot(self, name, version, mns=""):
-        self.cfg.name = name
-        self.cfg.mods += "," + mns
-        self.cfg.version = version
-        self.cfg.update(self.cfg.sets)
-        self.cfg.wd = obj.cfg.wd = self.cfg.wd or obj.cfg.wd
-        obj.cdir(self.cfg.wd + os.sep)
+    @staticmethod
+    def boot(name, version, mns=""):
+        Kernel.cfg.name = name
+        Kernel.cfg.mods += "," + mns
+        Kernel.cfg.version = version
+        Kernel.cfg.update(self.cfg.sets)
+        Kernel.cfg.wd = obj.cfg.wd = Kernel.cfg.wd or obj.cfg.wd
+        obj.cdir(Kernel.cfg.wd + os.sep)
         try:
             pwn = pwd.getpwnam(name)
         except KeyError:
@@ -42,7 +45,7 @@ class Kernel(Handler):
             except KeyError:
                 return
         try:
-            os.chown(self.cfg.wd, pwn.pw_uid, pwn.pw_gid)
+            os.chown(Kernel.cfg.wd, pwn.pw_uid, pwn.pw_gid)
         except PermissionError:
             pass
         self.privileges()
@@ -103,30 +106,33 @@ class Kernel(Handler):
         return True
 
     @staticmethod
+    def raw(txt):
+        print(txt)
+
+    @staticmethod
     def root():
         if os.geteuid() != 0:
             return False
         return True
 
-    def say(self, channel, txt):
-        print(txt)
-
     @staticmethod
-    def scan(path, base=None):
-        if not os.path.exists(path):
-            return
-        if base is None:
-            base = os.path.abspath(path).split(os.sep)[-1]
-        sys.path.insert(0, base)
-        for p in os.listdir(path):
-            mn = p.split(os.sep)[-1][:-3]
-            try:
-                mod = importlib.import_module(mn)
-            except ModuleNotFoundError:
+    def scan(mn):
+        mod = __import__(mn)
+        path = getdir(mod)
+        for mn in pkgutil.walk_packages([path,]):
+            if mn[1] == "tbl":
                 continue
+            zip = mn[0].find_module(mn[1])
+            mod = zip.load_module(mn[1])
             builtin(mod)
 
     @staticmethod
     def wait():
         while 1:
             time.sleep(5.0)
+
+def getdir(mod):
+    try:
+        return os.path.dirname(mod.__file__)
+    except AttributeError:
+        return mod.__path__[0]

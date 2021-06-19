@@ -15,7 +15,6 @@ from dbs import find, last
 from dft import Default
 from evt import Event
 from hdl import Handler
-from clt import Client
 from opt import Output
 from thr import launch
 from obj import Object, edit, fmt
@@ -91,10 +90,9 @@ class TextWrap(textwrap.TextWrapper):
         self.tabsize = 4
         self.width = 450
 
-class IRC(Client, Handler, Output):
+class IRC(Handler, Output):
 
     def __init__(self):
-        Client.__init__(self)
         Handler.__init__(self)
         Output.__init__(self)
         self.buffer = []
@@ -330,7 +328,6 @@ class IRC(Client, Handler, Output):
                        self.cfg.nick,
                        int(self.cfg.port))
         self.connected.wait()
-        Client.start(self)
         Handler.start(self)
         Output.start(self)
         Bus.add(self)
@@ -345,12 +342,11 @@ class IRC(Client, Handler, Output):
         except OSError:
             pass
         Output.stop(self)
-        Client.stop(self)
 
     def wait(self):
         self.joined.wait()
 
-class DCC(Client):
+class DCC(Handler):
 
     def __init__(self):
         super().__init__()

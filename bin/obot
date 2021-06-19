@@ -5,14 +5,12 @@ __version__ = 101
 
 import os, sys
 
-sys.path.insert(0, "olib")
-sys.path.insert(0, os.getcwd())
-
+from bus import Bus
 from err import Restart
 from hdl import Handler
-from krn import Kernel
+from krn import Kernel, getdir
 from obj import cfg
-from tbl import Table, scan
+from tbl import Table
 from trm import termreset, termsave
 
 name = "obot"
@@ -58,8 +56,7 @@ def main():
     k.parse()
     k.boot(name, __version__)
     k.start()
-    k.scan("olib")
-    k.scan("omod")
+    k.scan("obj")
     if k.cfg.txt:
         return k.cmd(k.cfg.otxt)
     if k.opts("d"):
