@@ -33,7 +33,7 @@ class Kernel(Handler):
         Kernel.cfg.name = name
         Kernel.cfg.mods += "," + mns
         Kernel.cfg.version = version
-        Kernel.cfg.update(self.cfg.sets)
+        Kernel.cfg.update(Kernel.cfg.sets)
         Kernel.cfg.wd = obj.cfg.wd = Kernel.cfg.wd or obj.cfg.wd
         obj.cdir(Kernel.cfg.wd + os.sep)
         try:
@@ -48,7 +48,7 @@ class Kernel(Handler):
             os.chown(Kernel.cfg.wd, pwn.pw_uid, pwn.pw_gid)
         except PermissionError:
             pass
-        self.privileges()
+        Kernel.privileges()
 
     def cmd(self, txt):
         Bus.add(self)
@@ -77,14 +77,16 @@ class Kernel(Handler):
             if "init" in dir(mod):
                 launch(mod.init, self)
 
-    def opts(self, ops):
+    @staticmethod
+    def opts(ops):
         for opt in ops:
-            if opt in self.cfg.opts:
+            if opt in Kernel.cfg.opts:
                 return True
         return False
 
-    def parse(self):
-        parse_txt(self.cfg, " ".join(sys.argv[1:]))
+    @staticmethod
+    def parse():
+        parse_txt(Kernel.cfg, " ".join(sys.argv[1:]))
 
     @staticmethod
     def privileges(name=None):

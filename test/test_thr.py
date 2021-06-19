@@ -5,8 +5,8 @@ import sys
 import unittest
 
 from bus import first
-from clt import Client
 from evt import Command
+from tbl import Table
 from thr import launch
 from krn import Kernel
 
@@ -39,11 +39,11 @@ def consume():
     return res
 
 def exec():
-    c = first()
-    l = list(Kernel.modules)
+    k = first()
+    l = list(Table.modules)
     random.shuffle(l)
     for cmd in l:
         for ex in getattr(param, cmd, [""]):
-            e = c.event(cmd + " " + ex)
-            c.put(e)
+            e = k.event(cmd + " " + ex)
+            k.dispatch(k, e)
             events.append(e)

@@ -3,14 +3,14 @@
 import os
 import time
 
-from krn import Kernel
 from obj import cfg, gettype, search
+from tbl import Table
 
 def all(otype, selector=None, index=None, timed=None):
     nr = -1
     if selector is None:
         selector = {}
-    otypes = Kernel.getnames(otype, [])
+    otypes = Table.getnames(otype, [])
     for t in otypes:
         for fn in fns(t, timed):
             o = hook(fn)
@@ -24,7 +24,7 @@ def all(otype, selector=None, index=None, timed=None):
             yield fn, o
 
 def deleted(otype):
-    otypes = Kernel.getnames(otype, [])
+    otypes = Table.getnames(otype, [])
     for t in otypes:
         for fn in fns(t):
             o = hook(fn)
@@ -137,7 +137,7 @@ def hook(hfn):
         oname = hfn.split(os.sep)
     cname = oname[0]
     fn = os.sep.join(oname)
-    t = Kernel.getcls(cname)
+    t = Table.getcls(cname)
     if not t:
         raise NoTypeError(cname)
     if fn:
