@@ -6,6 +6,7 @@ __version__ = 101
 import os, sys
 
 from bus import Bus
+from clt import Client
 from err import Restart
 from hdl import Handler
 from krn import Kernel, getdir
@@ -15,7 +16,7 @@ from trm import termreset, termsave
 
 name = "obot"
 
-class Console(Handler):
+class Console(Client):
 
     def error(self, e):
         cprint(e.exc)

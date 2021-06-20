@@ -18,14 +18,9 @@ class Handler(Object):
         super().__init__()
         self.cbs = Object()
         self.queue = queue.Queue()
-        self.iqueue = queue.Queue()
-        self.oqueue = queue.Queue()
-        self.ready = threading.Event()
         self.speed = "normal"
-        self.started = threading.Event()
         self.stopped = threading.Event()
-        self.istopped = threading.Event()
-        self.ostopped = threading.Event()
+        self.register("cmd", self.dispatch)
 
     def callbacks(self, event):
         if event and event.type in self.cbs:
@@ -77,31 +72,12 @@ class Handler(Object):
         if dorestart:
             self.restart()
 
-    def handler(self):
-        while not self.stopped.isSet():
-            txt = self.poll()
-            if txt is None:
-                break
-            e = self.event(txt)
-            if not e:
-                break
-            self.handle(e)
-
-    def poll(self):
-        return self.iqueue.get()
-
-    def raw(self, txt):
-        pass
-
     def restart(self):
         self.stop()
         self.start()
 
-    def say(self, channel, txt):
-        self.raw(txt)
-
     def put(self, e):
-        self.iqueue.put_nowait(e)
+        self.queue.put_nowait(e)
 
     def register(self, name, callback):
         self.cbs[name] = callback
@@ -111,16 +87,10 @@ class Handler(Object):
         self.start()
 
     def start(self):
-        self.register("cmd", Handler.dispatch)
         Bus.add(self)
         launch(self.dispatcher)
-        launch(self.handler)
         return self
 
     def stop(self):
         self.stopped.set()
-        self.iqueue.put(None)
-        self.oqueue.put(None)
-
-    def wait(self):
-        self.ready.wait()
+        self.queue.put(None)
