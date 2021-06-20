@@ -9,7 +9,6 @@ import pwd
 import sys
 import time
 
-from bus import Bus
 from dft import Default
 from obj import Object, spl
 from prs import parse_txt
@@ -30,6 +29,7 @@ class Kernel(Handler):
  
     @staticmethod
     def boot(name, version, mns=""):
+        Kernel.parse()
         Kernel.cfg.name = name
         Kernel.cfg.mods += "," + mns
         Kernel.cfg.version = version
@@ -49,13 +49,9 @@ class Kernel(Handler):
         except PermissionError:
             pass
         Kernel.privileges()
+        Kernel.scan("obj")
 
-    def cmd(self, txt):
-        Bus.add(self)
-        e = self.event(txt)
-        self.dispatch(self, e)
-        e.wait()
-
+    @staticmethod
     def daemon():
         pid = os.fork()
         if pid != 0:
@@ -70,12 +66,13 @@ class Kernel(Handler):
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
-    def init(self, mns):
+    @staticmethod
+    def init(mns):
         for mn in spl(mns):
             mnn = Table.getfull(mn)
             mod = Table.getmod(mnn)
             if "init" in dir(mod):
-                launch(mod.init, self)
+                launch(mod.init, Kernel)
 
     @staticmethod
     def opts(ops):
@@ -106,10 +103,6 @@ class Kernel(Handler):
         os.setuid(pwnam.pw_uid)
         old_umask = os.umask(0o22)
         return True
-
-    @staticmethod
-    def raw(txt):
-        print(txt)
 
     @staticmethod
     def root():

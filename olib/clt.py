@@ -3,18 +3,25 @@
 import queue
 import threading
 
+from bus import Bus
 from krn import Kernel
 from obj import Object
+from thr import launch
 
 class Client(Object):
 
     def __init__(self):
         super().__init__()
         self.iqueue = queue.Queue()
-        self.ready = threading.Event()
         self.speed = "normal"
-        self.target = Kernel
+        self.stopped = threading.Event()
         
+    def cmd(self, txt):
+        Bus.add(self)
+        e = self.event(txt)
+        Kernel.dispatch(self, e)
+        e.wait()
+
     def event(self, txt):
         if txt is None:
             return
@@ -24,7 +31,7 @@ class Client(Object):
         return c
 
     def handle(self, e):
-        self.target.put(e)
+        Kernel.dispatch(self, e)
 
     def handler(self):
         while not self.stopped.isSet():
@@ -56,6 +63,3 @@ class Client(Object):
     def stop(self):
         self.stopped.set()
         self.iqueue.put(None)
-
-    def wait(self):
-        self.ready.wait()

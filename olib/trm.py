@@ -23,3 +23,12 @@ def termsave():
         atexit.register(termreset)
     except termios.error:
         pass
+
+def wrap(func):
+    termsave()
+    try:
+        func()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        termreset()

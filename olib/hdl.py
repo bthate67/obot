@@ -1,7 +1,6 @@
 # This file is placed in the Public Domain.
 
 import queue
-import sys
 import threading
 
 from bus import Bus
@@ -20,7 +19,7 @@ class Handler(Object):
         self.queue = queue.Queue()
         self.speed = "normal"
         self.stopped = threading.Event()
-        self.register("cmd", self.dispatch)
+        self.register("cmd", Handler.dispatch)
 
     def callbacks(self, event):
         if event and event.type in self.cbs:
@@ -35,7 +34,6 @@ class Handler(Object):
         if f:
             f(obj)
             obj.show()
-        sys.stdout.flush()
         obj.ready()
 
     def error(self, event):
@@ -87,7 +85,6 @@ class Handler(Object):
         self.start()
 
     def start(self):
-        Bus.add(self)
         launch(self.dispatcher)
         return self
 

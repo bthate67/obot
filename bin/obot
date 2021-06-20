@@ -3,7 +3,7 @@
 
 __version__ = 101
 
-import os, sys
+import os, sys ; sys.path.insert(0, "olib")
 
 from bus import Bus
 from clt import Client
@@ -12,15 +12,20 @@ from hdl import Handler
 from krn import Kernel, getdir
 from obj import cfg
 from tbl import Table
-from trm import termreset, termsave
+from trm import wrap
 
 name = "obot"
 
-class Console(Client):
+class CLI(Client):
 
     def error(self, e):
-        cprint(e.exc)
+        print(e.exc)
         raise Restart
+
+    def raw(self, txt):
+        print(txt)
+
+class Console(CLI):
 
     def handle(self, e):
         super().handle(e)
@@ -29,24 +34,6 @@ class Console(Client):
     def poll(self):
         return input("> ")
 
-    def raw(self, txt):
-        cprint(txt)
-          
-def cprint(*args):
-    print(*args)
-    sys.stdout.flush()
-
-def wrap(func):
-    termsave()
-    try:
-        func()
-    except PermissionError as ex:
-        cprint(str(ex))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        termreset()
-
 def rse(event):
     raise Restart
 
@@ -54,18 +41,16 @@ def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
     Table.addcmd(rse)
     k = Kernel()
-    k.parse()
     k.boot(name, __version__)
     k.start()
-    k.scan("obj")
     if k.cfg.txt:
-        return k.cmd(k.cfg.otxt)
+        c = CLI()
+        return c.cmd(k.cfg.otxt)
     if k.opts("d"):
         k.daemon()
     else:
         c = Console()
         c.start()
-        Bus.add(c)
     k.init(k.cfg.mods)
     k.wait()
 
