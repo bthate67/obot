@@ -3,7 +3,10 @@
 
 __version__ = 101
 
-import os, sys ; sys.path.insert(0, "olib")
+import os
+import sys
+
+sys.path.insert(0, "ob")
 
 from bus import Bus
 from clt import Client
@@ -37,9 +40,13 @@ class Console(CLI):
 def rse(event):
     raise Restart
 
+def ver(event):
+    event.reply("%s %s" % (Kernel.cfg.name.upper(), Kernel.cfg.version))
+
 def main():
     cfg.wd = os.path.expanduser("~/.%s" % name)
     Table.addcmd(rse)
+    Table.addcmd(ver)
     k = Kernel()
     k.boot(name, __version__)
     k.start()

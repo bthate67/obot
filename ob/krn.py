@@ -83,7 +83,10 @@ class Kernel(Handler):
 
     @staticmethod
     def parse():
-        parse_txt(Kernel.cfg, " ".join(sys.argv[1:]))
+        txt = " ".join(sys.argv[1:])
+        o = Object()
+        parse_txt(o, txt)
+        Kernel.cfg.update(o)
 
     @staticmethod
     def privileges(name=None):
