@@ -3,64 +3,62 @@
 
 __version__ = 101
 
-import os, sys ; sys.path.insert(0, "olib")
-
-from clt import Client
-from krn import Kernel, kcmd, root
-from obj import cdir, cfg
-from trc import get_exception
-
-import all
-import atexit
 import os
-import pwd
-import shutil
 import sys
-import termios
 
-all = "adm,cms,fnd,irc,krn,log,rss,tdo,ver"
+sys.path.insert(0, "ob")
+
+from bus import Bus
+from clt import Client
+from err import Restart
+from hdl import Handler
+from krn import Kernel, getdir
+from obj import cfg
+from tbl import Table
+from trm import wrap
+
 name = "obot"
-resume = {}
 
-def cprint(txt):
-    print(txt)
-    sys.stdout.flush()
+class CLI(Client):
 
-def scan(path, base=None):
-    if not os.path.exists(path):
-        return
-    if base is None:
-        base = os.path.dirname(path).split(os.sep)[-1]
-    for p in os.listdir(path):
-        mn = p.split(os.sep)[-1][:-3]
-        try:
-            mod = importlib.import_module(mn, base)
-        except ImportError:
-            continue
-        Kernel.addmod(mod)
-        if "register" in dir(mod):
-            mod.register(Kernel)
+    def error(self, e):
+        print(e.exc)
+        raise Restart
+
+    def raw(self, txt):
+        print(txt)
+
+class Console(CLI):
+
+    def handle(self, e):
+        super().handle(e)
+        e.wait()
+
+    def poll(self):
+        return input("> ")
+
+def rse(event):
+    raise Restart
+
+def ver(event):
+    event.reply("%s %s" % (Kernel.cfg.name.upper(), Kernel.cfg.version))
 
 def main():
-    cfg.wd = "/var/lib/%s/" % name
+    cfg.wd = os.path.expanduser("~/.%s" % name)
+    Table.addcmd(rse)
+    Table.addcmd(ver)
     k = Kernel()
-    k.parse()
     k.boot(name, __version__)
-    k.regs(all)
-    c = Client()
-    c.initialize()
-    c.start()
-    k.init(all)
+    k.start()
+    if k.cfg.txt:
+        c = CLI()
+        return c.cmd(k.cfg.otxt)
+    if k.opts("d"):
+        k.daemon()
+    else:
+        c = Console()
+        c.start()
+    k.init(k.cfg.mods)
     k.wait()
 
-def exec(func):
-    try:
-        func()
-    except PermissionError as ex:
-        cprint(str(ex))
-    except KeyboardInterrupt:
-        pass
-    except Exception as ex:
-        cprint(get_exception())
-
-exec(main)
+wrap(main)
