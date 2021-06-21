@@ -3,8 +3,10 @@
 
 __version__ = 101
 
+import atexit
 import os
 import sys
+import termios
 
 sys.path.insert(0, "ob")
 
@@ -15,9 +17,9 @@ from hdl import Handler
 from krn import Kernel, getdir
 from obj import cfg
 from tbl import Table
-from trm import wrap
 
 name = "obot"
+resume = {} 
 
 class CLI(Client):
 
@@ -36,6 +38,47 @@ class Console(CLI):
 
     def poll(self):
         return input("> ")
+
+def daemon():
+    pid = os.fork()
+    if pid != 0:
+        termreset()
+        os._exit(0)
+    os.setsid()
+    os.umask(0)
+    si = open("/dev/null", 'r')
+    so = open("/dev/null", 'a+')
+    se = open("/dev/null", 'a+')
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+
+def termsetup(fd):
+    return termios.tcgetattr(fd)
+
+def termreset():
+    if "old" in resume:
+        try:
+            termios.tcsetattr(resume["fd"], termios.TCSADRAIN, resume["old"])
+        except termios.error:
+            pass
+
+def termsave():
+    try:
+        resume["fd"] = sys.stdin.fileno()
+        resume["old"] = termsetup(sys.stdin.fileno())
+        atexit.register(termreset)
+    except termios.error:
+        pass
+
+def wrap(func):
+    termsave()
+    try:
+        func()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        termreset()
 
 def rse(event):
     raise Restart

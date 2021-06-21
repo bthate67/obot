@@ -15,7 +15,6 @@ from hdl import Handler
 from krn import Kernel, getdir
 from obj import cfg
 from tbl import Table
-from trm import wrap
 
 name = "ocmd"
 
@@ -53,4 +52,4 @@ def main():
     c = CLI()
     return c.cmd(k.cfg.otxt)
 
-wrap(main)
+main()

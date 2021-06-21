@@ -52,21 +52,6 @@ class Kernel(Handler):
         Kernel.scan("obj")
 
     @staticmethod
-    def daemon():
-        pid = os.fork()
-        if pid != 0:
-            trm.termreset()
-            os._exit(0)
-        os.setsid()
-        os.umask(0)
-        si = open("/dev/null", 'r')
-        so = open("/dev/null", 'a+')
-        se = open("/dev/null", 'a+')
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
-
-    @staticmethod
     def init(mns):
         for mn in spl(mns):
             mnn = Table.getfull(mn)
