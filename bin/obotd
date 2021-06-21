@@ -25,11 +25,32 @@ class CLI(Client):
     def raw(self, txt):
         print(txt)
 
+def daemon():
+    pid = os.fork()
+    if pid != 0:
+        os._exit(0)
+    os.setsid()
+    os.umask(0)
+    si = open("/dev/null", 'r')
+    so = open("/dev/null", 'a+')
+    se = open("/dev/null", 'a+')
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+
 def rse(event):
     raise Restart
 
 def ver(event):
     event.reply("%s %s" % (Kernel.cfg.name.upper(), Kernel.cfg.version))
+
+def wrap(func):
+    try:
+        func()
+    except PermissionError as ex:
+        print(ex)
+    except KeyboardInterrupt:
+        pass
 
 def main():
     cfg.version = 1
@@ -42,8 +63,8 @@ def main():
     if k.cfg.txt:
         c = CLI()
         return c.cmd(k.cfg.otxt)
-    k.daemon()
+    daemon()
     k.init(k.cfg.mods)
     k.wait()
 
-main()
+wrap(main)
